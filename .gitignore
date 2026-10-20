@@ -1,0 +1,15 @@
+.agentbricks-current/
+**/.venv/
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.ruff_cache/
+**/.env
+**/.env.local
+**/.agentbricks/*
+!**/.agentbricks/project.toml
+**/.databricks/
+**/mlruns/
+**/*.db
+**/*.log
+.DS_Store

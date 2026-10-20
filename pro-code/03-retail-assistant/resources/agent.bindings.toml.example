@@ -1,0 +1,16 @@
+# APPEND these tables to agent.toml after replacing the Genie ID and resource names,
+# or use the documented CLI commands to validate/write these bindings.
+# This file is documentation, not loaded by the application.
+[[tools]]
+id = "retail"
+auth = "app"
+[tools.source]
+kind = "genie_agent"
+space_id = "REPLACE_WITH_REAL_32_CHARACTER_LOWERCASE_HEX_ID"
+
+[[tools]]
+id = "github_docs"
+auth = "app"
+[tools.source]
+kind = "mcp"
+service = "northstar_demo.retail.github_docs"

@@ -1,0 +1,124 @@
+{
+  "version": 2,
+  "config": {
+    "sample_questions": [
+      {
+        "id": "00000000000000000000000000000001",
+        "question": [
+          "What was net revenue by product from October 1 through October 3, 2026?"
+        ]
+      },
+      {
+        "id": "00000000000000000000000000000002",
+        "question": [
+          "How many units were sold in the East region from October 1 through October 3, 2026?"
+        ]
+      },
+      {
+        "id": "00000000000000000000000000000003",
+        "question": [
+          "List sale lines for Trail Runner on October 2, 2026."
+        ]
+      }
+    ]
+  },
+  "data_sources": {
+    "tables": [
+      {
+        "identifier": "northstar_demo.retail.sales",
+        "column_configs": [
+          {
+            "column_name": "category",
+            "description": [
+              "Product category."
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "net_revenue_usd",
+            "description": [
+              "Net revenue in USD, already after discounts. Sum across sale lines. Fixture excludes returns and tax."
+            ],
+            "synonyms": [
+              "sales",
+              "net sales",
+              "revenue"
+            ]
+          },
+          {
+            "column_name": "product_id",
+            "description": [
+              "SKU identifier."
+            ]
+          },
+          {
+            "column_name": "product_name",
+            "description": [
+              "Product display name."
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "region",
+            "description": [
+              "Sales region: East or West."
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "sale_date",
+            "description": [
+              "Calendar sale date. Fixture covers October 1 through 3, 2026."
+            ]
+          },
+          {
+            "column_name": "sale_id",
+            "description": [
+              "Unique sale line identifier."
+            ]
+          },
+          {
+            "column_name": "units",
+            "description": [
+              "Units sold on a sale line; additive across sale lines."
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "instructions": {
+    "example_question_sqls": [
+      {
+        "id": "00000000000000000000000000000065",
+        "question": [
+          "What was net revenue by product from October 1 through October 3, 2026?"
+        ],
+        "sql": [
+          "SELECT s.product_id, s.product_name, SUM(s.net_revenue_usd) AS revenue_usd FROM northstar_demo.retail.sales AS s WHERE s.sale_date BETWEEN DATE'2026-10-01' AND DATE'2026-10-03' GROUP BY s.product_id, s.product_name ORDER BY revenue_usd DESC, s.product_id LIMIT 10"
+        ]
+      },
+      {
+        "id": "00000000000000000000000000000066",
+        "question": [
+          "How many units were sold in the East region from October 1 through October 3, 2026?"
+        ],
+        "sql": [
+          "SELECT SUM(s.units) AS units FROM northstar_demo.retail.sales AS s WHERE s.region = 'East' AND s.sale_date BETWEEN DATE'2026-10-01' AND DATE'2026-10-03'"
+        ]
+      },
+      {
+        "id": "00000000000000000000000000000067",
+        "question": [
+          "List sale lines for Trail Runner on October 2, 2026."
+        ],
+        "sql": [
+          "SELECT s.sale_id, s.sale_date, s.region, s.units, s.net_revenue_usd FROM northstar_demo.retail.sales AS s WHERE s.product_name = 'Trail Runner' AND s.sale_date = DATE'2026-10-02' ORDER BY s.sale_id LIMIT 20"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "version": 2,
+  "config": {
+    "sample_questions": [
+      {
+        "id": "00000000000000000000000000000001",
+        "question": [
+          "Which products were below their reorder point on October 3, 2026?"
+        ]
+      },
+      {
+        "id": "00000000000000000000000000000002",
+        "question": [
+          "How much stock of Trail Runner was on hand across warehouses on October 3, 2026?"
+        ]
+      },
+      {
+        "id": "00000000000000000000000000000003",
+        "question": [
+          "List inventory in Reno on October 3, 2026."
+        ]
+      }
+    ]
+  },
+  "data_sources": {
+    "tables": [
+      {
+        "identifier": "northstar_demo.retail.inventory",
+        "column_configs": [
+          {
+            "column_name": "category",
+            "description": [
+              "Product category."
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "on_hand_units",
+            "description": [
+              "Physical stock for one product at one warehouse on one snapshot date. Additive across warehouses on the same date."
+            ],
+            "synonyms": [
+              "stock",
+              "inventory"
+            ]
+          },
+          {
+            "column_name": "product_id",
+            "description": [
+              "SKU identifier matching the sales domain."
+            ]
+          },
+          {
+            "column_name": "product_name",
+            "description": [
+              "Product display name."
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "reorder_point_units",
+            "description": [
+              "Warehouse-specific reorder threshold. Low stock means on_hand_units < reorder_point_units; equal is not below threshold."
+            ]
+          },
+          {
+            "column_name": "snapshot_date",
+            "description": [
+              "Daily snapshot date. Never add stock across snapshot dates. Fixture date is 2026-10-03."
+            ]
+          },
+          {
+            "column_name": "warehouse",
+            "description": [
+              "Warehouse location: Boston or Reno."
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          }
+        ]
+      }
+    ]
+  },
+  "instructions": {
+    "example_question_sqls": [
+      {
+        "id": "00000000000000000000000000000065",
+        "question": [
+          "Which products were below their reorder point on October 3, 2026?"
+        ],
+        "sql": [
+          "SELECT i.product_id, i.product_name, i.warehouse, i.on_hand_units, i.reorder_point_units FROM northstar_demo.retail.inventory AS i WHERE i.snapshot_date = DATE'2026-10-03' AND i.on_hand_units < i.reorder_point_units ORDER BY i.product_id, i.warehouse LIMIT 20"
+        ]
+      },
+      {
+        "id": "00000000000000000000000000000066",
+        "question": [
+          "How much stock of Trail Runner was on hand across warehouses on October 3, 2026?"
+        ],
+        "sql": [
+          "SELECT i.product_id, SUM(i.on_hand_units) AS on_hand_units FROM northstar_demo.retail.inventory AS i WHERE i.snapshot_date = DATE'2026-10-03' AND i.product_name = 'Trail Runner' GROUP BY i.product_id ORDER BY i.product_id LIMIT 20"
+        ]
+      },
+      {
+        "id": "00000000000000000000000000000067",
+        "question": [
+          "List inventory in Reno on October 3, 2026."
+        ],
+        "sql": [
+          "SELECT i.product_id, i.product_name, i.on_hand_units, i.reorder_point_units FROM northstar_demo.retail.inventory AS i WHERE i.snapshot_date = DATE'2026-10-03' AND i.warehouse = 'Reno' ORDER BY i.product_id LIMIT 20"
+        ]
+      }
+    ]
+  }
+}

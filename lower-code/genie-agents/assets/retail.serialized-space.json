@@ -1,0 +1,204 @@
+{
+  "version": 2,
+  "config": {
+    "sample_questions": [
+      {
+        "id": "00000000000000000000000000000001",
+        "question": [
+          "Compare units sold October 1 through 3, 2026 with stock on hand October 3, 2026 for every product."
+        ]
+      },
+      {
+        "id": "00000000000000000000000000000002",
+        "question": [
+          "For products sold October 1 through 3, 2026, which warehouse inventory records were below reorder point on October 3, 2026?"
+        ]
+      },
+      {
+        "id": "00000000000000000000000000000003",
+        "question": [
+          "How much net revenue did each product generate October 1 through 3, 2026 and how many warehouses held stock on October 3, 2026?"
+        ]
+      }
+    ]
+  },
+  "data_sources": {
+    "tables": [
+      {
+        "identifier": "northstar_demo.retail.inventory",
+        "column_configs": [
+          {
+            "column_name": "category",
+            "description": [
+              "Product category."
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "on_hand_units",
+            "description": [
+              "Physical stock for one product at one warehouse on one snapshot date. Additive across warehouses on the same date."
+            ],
+            "synonyms": [
+              "stock",
+              "inventory"
+            ]
+          },
+          {
+            "column_name": "product_id",
+            "description": [
+              "SKU identifier matching the sales domain."
+            ]
+          },
+          {
+            "column_name": "product_name",
+            "description": [
+              "Product display name."
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "reorder_point_units",
+            "description": [
+              "Warehouse-specific reorder threshold. Low stock means on_hand_units < reorder_point_units; equal is not below threshold."
+            ]
+          },
+          {
+            "column_name": "snapshot_date",
+            "description": [
+              "Daily snapshot date. Never add stock across snapshot dates. Fixture date is 2026-10-03."
+            ]
+          },
+          {
+            "column_name": "warehouse",
+            "description": [
+              "Warehouse location: Boston or Reno."
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          }
+        ],
+        "description": [
+          "One row per snapshot date, SKU, warehouse. Select exactly one snapshot date. Aggregate to product_id before joining product-level sales; retain warehouse grain only for warehouse-specific stock flags."
+        ]
+      },
+      {
+        "identifier": "northstar_demo.retail.sales",
+        "column_configs": [
+          {
+            "column_name": "category",
+            "description": [
+              "Product category."
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "net_revenue_usd",
+            "description": [
+              "Net revenue in USD, already after discounts. Sum across sale lines. Fixture excludes returns and tax."
+            ],
+            "synonyms": [
+              "sales",
+              "net sales",
+              "revenue"
+            ]
+          },
+          {
+            "column_name": "product_id",
+            "description": [
+              "SKU identifier."
+            ]
+          },
+          {
+            "column_name": "product_name",
+            "description": [
+              "Product display name."
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "region",
+            "description": [
+              "Sales region: East or West."
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "sale_date",
+            "description": [
+              "Calendar sale date. Fixture covers October 1 through 3, 2026."
+            ]
+          },
+          {
+            "column_name": "sale_id",
+            "description": [
+              "Unique sale line identifier."
+            ]
+          },
+          {
+            "column_name": "units",
+            "description": [
+              "Units sold on a sale line; additive across sale lines."
+            ]
+          }
+        ],
+        "description": [
+          "One row per sale line. Historical sales flow: aggregate to product_id before joining inventory; a raw join duplicates sales across warehouses and snapshots."
+        ]
+      }
+    ]
+  },
+  "instructions": {
+    "example_question_sqls": [
+      {
+        "id": "00000000000000000000000000000065",
+        "question": [
+          "Compare units sold October 1 through 3, 2026 with stock on hand October 3, 2026 for every product."
+        ],
+        "sql": [
+          "WITH sold AS (SELECT s.product_id, s.product_name, SUM(s.units) AS units_sold FROM northstar_demo.retail.sales AS s WHERE s.sale_date BETWEEN DATE'2026-10-01' AND DATE'2026-10-03' GROUP BY s.product_id, s.product_name), stock AS (SELECT i.product_id, SUM(i.on_hand_units) AS on_hand_units FROM northstar_demo.retail.inventory AS i WHERE i.snapshot_date = DATE'2026-10-03' GROUP BY i.product_id) SELECT sold.product_id, sold.product_name, sold.units_sold, stock.on_hand_units FROM sold LEFT JOIN stock ON sold.product_id = stock.product_id ORDER BY sold.product_id LIMIT 20"
+        ],
+        "usage_guidance": [
+          "Explicit sales date range and single inventory snapshot; aggregate facts before joining to avoid multiplied totals."
+        ]
+      },
+      {
+        "id": "00000000000000000000000000000066",
+        "question": [
+          "For products sold October 1 through 3, 2026, which warehouse inventory records were below reorder point on October 3, 2026?"
+        ],
+        "sql": [
+          "WITH sold AS (SELECT s.product_id, SUM(s.units) AS units_sold FROM northstar_demo.retail.sales AS s WHERE s.sale_date BETWEEN DATE'2026-10-01' AND DATE'2026-10-03' GROUP BY s.product_id) SELECT i.product_id, i.product_name, i.warehouse, i.on_hand_units, i.reorder_point_units, sold.units_sold FROM northstar_demo.retail.inventory AS i INNER JOIN sold ON i.product_id = sold.product_id WHERE i.snapshot_date = DATE'2026-10-03' AND i.on_hand_units < i.reorder_point_units ORDER BY i.product_id, i.warehouse LIMIT 20"
+        ],
+        "usage_guidance": [
+          "Explicit sales date range and single inventory snapshot; aggregate facts before joining to avoid multiplied totals."
+        ]
+      },
+      {
+        "id": "00000000000000000000000000000067",
+        "question": [
+          "How much net revenue did each product generate October 1 through 3, 2026 and how many warehouses held stock on October 3, 2026?"
+        ],
+        "sql": [
+          "WITH revenue AS (SELECT s.product_id, s.product_name, SUM(s.net_revenue_usd) AS revenue_usd FROM northstar_demo.retail.sales AS s WHERE s.sale_date BETWEEN DATE'2026-10-01' AND DATE'2026-10-03' GROUP BY s.product_id, s.product_name), stock AS (SELECT i.product_id, COUNT(DISTINCT i.warehouse) AS warehouses_with_stock FROM northstar_demo.retail.inventory AS i WHERE i.snapshot_date = DATE'2026-10-03' AND i.on_hand_units > 0 GROUP BY i.product_id) SELECT revenue.product_id, revenue.product_name, revenue.revenue_usd, stock.warehouses_with_stock FROM revenue LEFT JOIN stock ON revenue.product_id = stock.product_id ORDER BY revenue.product_id LIMIT 20"
+        ],
+        "usage_guidance": [
+          "Explicit sales date range and single inventory snapshot; aggregate facts before joining to avoid multiplied totals."
+        ]
+      }
+    ],
+    "text_instructions": [
+      {
+        "id": "000000000000000000000000000000c9",
+        "content": [
+          "## DISAMBIGUATION\n- Ask for a historical sales period or inventory snapshot date when missing; do not describe the October 2026 fixture as current live data.\n\n## Instructions you must follow when providing summaries\n- State the sales date range and inventory snapshot date separately.\n- Distinguish observed low stock from a purchase recommendation; this agent has no supplier lead-time or replenishment-policy source."
+        ]
+      }
+    ]
+  }
+}

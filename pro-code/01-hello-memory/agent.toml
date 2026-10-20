@@ -1,0 +1,14 @@
+schema_version = 1
+
+[agent]
+framework = "langgraph"
+server = "agentbricks"
+
+[memory_store]
+name = "hello-memory-demo-memory"
+
+[session_store]
+name = "hello-memory-demo-sessions"
+
+[tracing]
+experiment_name = "/Shared/agentbricks_traces/hello-memory-demo"
