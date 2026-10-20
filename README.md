@@ -10,7 +10,8 @@ Start with Hello World, then explore orchestration and data integrations.
 | [Retail assistant](pro-code/03-retail-assistant/README.md) | Browser chat, Genie analytics, AI Search document ingestion/retrieval, external MCP through a UC HTTP connection |
 | [Lower-code Genie Agents](lower-code/genie-agents/README.md) | UI walkthrough, synthetic retail data and reusable Genie definitions |
 
-Each example includes setup instructions, configuration and tests. Retail data and policies are synthetic.
+Each example runs independently and includes setup instructions, configuration and tests.
+Retail data and policies are synthetic.
 
 ## Getting started
 
