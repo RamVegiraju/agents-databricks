@@ -1,7 +1,10 @@
 # 01 · Hello World with managed memory
 
 An explicit LangGraph model/tool loop with one local UTC clock tool, browser chat, and the current
-AgentKit memory/session integrations. **Prepared for deployment; not deployed or provisioned.**
+AgentKit memory/session integrations.
+
+For a one-versus-three instance Apps demo with replica evidence and a Locust benchmark, see
+[Horizontal scaling](HORIZONTAL_SCALING.md) and the [live results](BENCHMARK_RESULTS.md).
 
 ```text
 Browser → DurableAgentServer → runtime/adapter.py → LangGraph agent ↔ tools → END
@@ -14,9 +17,9 @@ Memory pipeline: transcripts → extraction → consolidation → Memory Store
 
 ```bash
 cd pro-code/01-hello-memory
-uv sync --group dev
-uv run pytest -q
-uv run agentbricks doctor .
+uv sync --frozen --group dev
+uv run --frozen pytest -q
+uv run --frozen agentbricks doctor .
 ```
 
 Integration versions: Agent Bricks 0.6.0, Databricks SDK 0.154.0, databricks-langchain 0.21.0.
@@ -186,8 +189,10 @@ No setup is invoked by tests or app startup.
 
 Checked against installed AgentKit0.6.0 langgraph/memory.py, langgraph/session_store.py,
 resource session_store.py/memory_store.py and CLI memory/pipeline/sessions source/help.
-Workspace provisioning, permissions, model calls, pipeline extraction, restart persistence and
-remote MLflow export remain untested because no live execution was authorized for this build.
+The [2026-10-23 live benchmark](BENCHMARK_RESULTS.md) validated deployment, store creation,
+App access, real model calls, and one-to-three instance routing in `e2-dogfood-staging`.
+Pipeline extraction, conversation continuity after worker loss, and remote MLflow export were
+outside that benchmark.
 
 References:
 [LangGraph](https://docs.langchain.com/oss/python/langgraph/quickstart),

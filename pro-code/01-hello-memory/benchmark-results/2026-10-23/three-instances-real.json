@@ -1,0 +1,40 @@
+{
+  "label": "three-instances",
+  "recorded_at_utc": "2026-10-23T20:32:30.433239+00:00",
+  "app_url": "https://agent-bricks-hello-memory-demo-6051921418418893.staging.aws.databricksapps.com",
+  "profile": "e2-dogfood-staging",
+  "prompt": "Reply with exactly one short sentence saying hello.",
+  "duration_seconds_per_level": 30,
+  "replica_count_observed": 3,
+  "replica_request_counts": {
+    "73d24d92-0843-424f-8877-59927d7df385": 25,
+    "73054af6-86ac-4d92-84e5-aef349f53f76": 16,
+    "d69e1737-6da4-454f-90aa-5db650ed3b98": 19
+  },
+  "levels": [
+    {
+      "users": 1,
+      "exit_code": 0,
+      "started": 4,
+      "completed": 4,
+      "failures": 0,
+      "incomplete": 0,
+      "requests_per_second": 0.11253452369952996,
+      "latency_ms_p50": 12000.0,
+      "latency_ms_p95": 13000.0,
+      "latency_ms_mean": 8872.438083250017
+    },
+    {
+      "users": 4,
+      "exit_code": 1,
+      "started": 33,
+      "completed": 33,
+      "failures": 10,
+      "incomplete": 0,
+      "requests_per_second": 1.0302939918147604,
+      "latency_ms_p50": 3400.0,
+      "latency_ms_p95": 5200.0,
+      "latency_ms_mean": 3763.525284091222
+    }
+  ]
+}

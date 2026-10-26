@@ -1,0 +1,62 @@
+{
+  "label": "one-instance-mock",
+  "recorded_at_utc": "2026-10-23T20:39:52.882003+00:00",
+  "app_url": "https://agent-bricks-hello-memory-demo-6051921418418893.staging.aws.databricksapps.com",
+  "profile": "e2-dogfood-staging",
+  "prompt": "Reply with exactly one short sentence saying hello.",
+  "duration_seconds_per_level": 30,
+  "replica_count_observed": 1,
+  "replica_request_counts": {
+    "16aa73a5-4d0b-46e7-818f-bd25e30e049b": 60
+  },
+  "levels": [
+    {
+      "users": 1,
+      "exit_code": 0,
+      "started": 18,
+      "completed": 18,
+      "failures": 0,
+      "incomplete": 0,
+      "requests_per_second": 0.5848180447634898,
+      "latency_ms_p50": 2200.0,
+      "latency_ms_p95": 2400.0,
+      "latency_ms_mean": 1706.2449120559095
+    },
+    {
+      "users": 4,
+      "exit_code": 0,
+      "started": 53,
+      "completed": 53,
+      "failures": 0,
+      "incomplete": 0,
+      "requests_per_second": 1.7038553524860023,
+      "latency_ms_p50": 2300.0,
+      "latency_ms_p95": 2800.0,
+      "latency_ms_mean": 2308.013211395965
+    },
+    {
+      "users": 8,
+      "exit_code": 0,
+      "started": 73,
+      "completed": 73,
+      "failures": 0,
+      "incomplete": 0,
+      "requests_per_second": 2.278195032372365,
+      "latency_ms_p50": 3200.0,
+      "latency_ms_p95": 4900.0,
+      "latency_ms_mean": 3377.9087688226477
+    },
+    {
+      "users": 16,
+      "exit_code": 0,
+      "started": 85,
+      "completed": 85,
+      "failures": 0,
+      "incomplete": 0,
+      "requests_per_second": 2.3884918640624027,
+      "latency_ms_p50": 6300.0,
+      "latency_ms_p95": 8800.0,
+      "latency_ms_mean": 6365.941364189562
+    }
+  ]
+}

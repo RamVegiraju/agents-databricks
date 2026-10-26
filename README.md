@@ -6,6 +6,7 @@ Start with Hello World, then explore orchestration and data integrations.
 | Example | Features |
 | --- | --- |
 | [Hello World + memory](pro-code/01-hello-memory/README.md) | LangGraph, local tool, conversation state, memory tools, automatic recall and memory pipelines |
+| [Horizontal scaling walkthrough](pro-code/01-hello-memory/HORIZONTAL_SCALING.md) | One-to-three App instance update, replica probe, and Locust concurrency comparison |
 | [Genie supervisor](pro-code/02-genie-supervisor/README.md) | LangGraph supervisor over sales and inventory Genie subagents |
 | [Retail assistant](pro-code/03-retail-assistant/README.md) | Browser chat, Genie analytics, AI Search document ingestion/retrieval, external MCP through a UC HTTP connection |
 | [Lower-code Genie Agents](lower-code/genie-agents/README.md) | UI walkthrough, synthetic retail data and reusable Genie definitions |
@@ -19,9 +20,9 @@ Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 cd pro-code/01-hello-memory
-uv sync --locked --group dev
-uv run pytest -q
-uv run agentbricks doctor .
+uv sync --frozen --group dev
+uv run --frozen pytest -q
+uv run --frozen agentbricks doctor .
 ```
 
 Follow the example's README to select a Databricks profile and run against workspace services.

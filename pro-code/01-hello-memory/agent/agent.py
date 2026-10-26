@@ -23,6 +23,7 @@ from langchain_core.messages import SystemMessage
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
+from agent.benchmark_model import BenchmarkModel
 from agent.mcps import build_mcp_servers
 from agent.memory import recalled_context, selected_memory_tools
 
@@ -153,8 +154,14 @@ async def create_agent_graph(
     return build_graph(
         # use_ai_gateway routes to the Unity Catalog AI Gateway (`<host>/ai-gateway/mlflow/v1`), so
         # `endpoint` is a `system.ai.*` model name rather than a serving-endpoint name.
-        chat_model=_RoutedChatDatabricks(
-            endpoint=endpoint, workspace_client=workspace_client(), use_ai_gateway=True
+        chat_model=(
+            BenchmarkModel(int(os.getenv("SCALING_BENCHMARK_CPU_MS", "100")))
+            if os.getenv("SCALING_BENCHMARK_MOCK_MODEL") == "true"
+            else _RoutedChatDatabricks(
+                endpoint=endpoint,
+                workspace_client=workspace_client(),
+                use_ai_gateway=True,
+            )
         ),
         tools=tools,
         saver=checkpointer(),
