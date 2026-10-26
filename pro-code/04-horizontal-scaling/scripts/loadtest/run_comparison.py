@@ -8,7 +8,7 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 
-from compare import compare
+from compare import compare, terminal_report
 from run import run
 
 
@@ -188,8 +188,8 @@ def main() -> None:
     comparison = compare(*summaries)
     (args.output_dir / "comparison.md").write_text(comparison + "\n")
     report = render_report(args.output_dir, *summaries, comparison)
-    print(f"\n{comparison}\n", flush=True)
-    print(f"Locust reports: {report.resolve()}", flush=True)
+    print(f"Optional Locust HTML/CSV: {report.resolve()}", flush=True)
+    print(f"\n{terminal_report(*summaries)}\n", flush=True)
     if any(
         row["exit_code"] or row["failures"] or row["incomplete"]
         for summary in summaries

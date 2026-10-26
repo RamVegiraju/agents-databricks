@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import run_comparison
-from compare import compare
+from compare import compare, terminal_report
 
 
 def app(name: str, count: int) -> dict:
@@ -125,6 +125,18 @@ class ComparisonCliTests(unittest.TestCase):
         scaled["compute_size"] = "LARGE"
         with self.assertRaisesRegex(ValueError, "different compute sizes"):
             compare(baseline, scaled)
+
+    def test_terminal_report_summarizes_both_completed_runs(self) -> None:
+        baseline = summary("https://one.example.com", 1, 2.4)
+        scaled = summary("https://three.example.com", 3, 6.0)
+        baseline["levels"][0]["completed"] = 150
+        scaled["levels"][0]["completed"] = 374
+        report = terminal_report(baseline, scaled)
+        self.assertIn("FINAL LOAD TEST REPORT", report)
+        self.assertIn("2.40 -> 6.00 req/s (2.50x)", report)
+        self.assertIn("1 instance: 150 completed, 0 failed, 0 incomplete", report)
+        self.assertIn("3 instances: 374 completed, 0 failed, 0 incomplete", report)
+        self.assertIn("including the final drain", report)
 
 
 if __name__ == "__main__":
