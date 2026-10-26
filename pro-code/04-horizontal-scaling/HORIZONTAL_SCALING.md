@@ -38,8 +38,8 @@ last drained requests; `final-summary.json` and `summary.json` include them. Com
 same prompt, user levels, compute size, source, and store bindings. The CLI checks the measurable
 parts of that setup; deploy both Apps from the same checkout.
 
-The [two-App benchmark](BENCHMARK_RESULTS.md) measured **2.23 → 5.44 req/s (2.44×)** at 16 users,
-with zero failed or incomplete requests and 618 `OK` traces across all stages and preflights. The
+The latest [two-App benchmark](BENCHMARK_RESULTS.md) measured **2.25 → 5.69 req/s (2.53×)** at 16 users,
+with zero failed or incomplete requests and 625 `OK` traces across all stages and preflights. The
 same document also retains the older benchmark that changed one App's fixed count. A short
 real-model run did not establish an App throughput gain because the shared model service became a
 limit.

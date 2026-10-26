@@ -6,8 +6,9 @@ The Agent Bricks CLI starts a new LangGraph project with:
 uvx --from databricks-agentbricks==0.6.0 agentbricks init --framework langgraph my-agent
 ```
 
-That command creates a separate `my-agent/` scaffold. The end-to-end commands below run the
-checked-in, smaller sample in `pro-code/01-agentbricks-cli/`: a LangGraph agent with one local
+That command creates a separate `my-agent/` scaffold with a chat UI and declared memory/session
+stores. The end-to-end commands below run the checked-in, smaller API-only sample in
+`pro-code/01-agentbricks-cli/`: a LangGraph agent with one local
 `get_current_time` tool. It needs no configured Session Store, Memory Store, or external tool;
 deployment still uses Agent Bricks' Runtime Store for invocation records.
 
@@ -32,6 +33,8 @@ uv run --frozen agentbricks --profile <profile> endpoint invoke \
 ```
 
 Use a new `id` for each invocation. Local `dev` uses process memory for conversation state and invokes the chosen workspace model.
+If an older local `.venv` reports `Failed to spawn: start-server`, run
+`uv sync --frozen --reinstall-package agentbricks-cli-quickstart` and retry `dev`.
 
 ## Deploy
 
@@ -47,6 +50,10 @@ uv run --frozen agentbricks --profile <profile> endpoint invoke agent-bricks-<un
 identity to call the model. Reusing `<unique-name>` updates that App. At startup, `uv run` installs
 the App's dependencies from `pyproject.toml`; the CLI source sync does not upload `uv.lock`.
 This sample has no bound MLflow tracing experiment.
+
+The commands use `--frozen` to install from the checked-in public-PyPI lockfile. If your shell sets
+`UV_INDEX_URL` to another registry, `uv sync --locked` can report that the lock needs updating
+solely because the registry URLs differ. Avoid committing that registry-only lockfile rewrite.
 
 For a code walkthrough, show `agent.toml` (project settings), `app.yaml` (start command), `agent/agent.py` (graph and model), `agent/tools/sample_tool.py` (local tool), and `runtime/main.py` (HTTP server). `runtime/adapter.py` translates Agent Bricks invocations into LangGraph messages. The HTTP request contract is in [AGENTKIT_CONTRACT.md](AGENTKIT_CONTRACT.md).
 

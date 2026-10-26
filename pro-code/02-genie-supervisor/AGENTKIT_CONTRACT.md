@@ -37,9 +37,9 @@ that make later bindings ineffective.
 ### Tools
 
 Use `databricks_agentkit.langgraph.mcp_tools()` for MCP, UC function, and sandbox bindings, combining
-them with existing servers without duplicates. It applies sandbox downscoping. Local Python tools
-belong in source; the template discovers `BaseTool` objects through
-[agent/tools/__init__.py](agent/tools/__init__.py).
+them with existing servers without duplicates. It applies sandbox downscoping. This sample uses
+native Genie tools and has no local `agent/tools` module. If adding local Python tools, put their
+`BaseTool` exports in `agent/tools/__init__.py` as the template expects.
 
 Feed selected tools into both model definitions and graph execution while preserving approval
 policy. New bindings must become effective on the next graph construction or restart without

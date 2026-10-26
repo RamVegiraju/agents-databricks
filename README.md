@@ -16,5 +16,5 @@ explain the workload, MLflow trace cross-check, and limits of this single run.
 
 Each sample has its own setup instructions. Python samples require Python 3.11+ and
 [uv](https://docs.astral.sh/uv/). Run `bash scripts/validate.sh` for local checks; uv may download
-packages from the public index. The [validation record](docs/VALIDATION.md) covers the original
-offline examples; the scaling sample has its own measured results.
+packages from the public index. The [validation record](docs/VALIDATION.md) covers the current
+samples and live-check scope; the scaling sample has its own measured results.
