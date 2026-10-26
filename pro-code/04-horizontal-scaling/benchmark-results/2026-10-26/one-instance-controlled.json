@@ -1,0 +1,77 @@
+{
+  "label": "one-instance",
+  "recorded_at_utc": "2026-10-26T14:17:05.320732+00:00",
+  "app_url": "<one-instance-app-url>",
+  "profile": "<profile>",
+  "prompt": "Reply with exactly one short sentence saying hello.",
+  "duration_seconds_per_level": 30,
+  "replica_count_observed": 1,
+  "replica_request_counts": {
+    "process-1": 60
+  },
+  "levels": [
+    {
+      "users": 1,
+      "exit_code": 0,
+      "started_at_utc": "2026-10-26T14:14:56.185654+00:00",
+      "finished_at_utc": "2026-10-26T14:15:27.342311+00:00",
+      "started": 24,
+      "completed": 24,
+      "failures": 0,
+      "incomplete": 0,
+      "elapsed_seconds_including_drain": 30.66352154199558,
+      "requests_per_second": 0.7826889669906479,
+      "latency_ms_p50": 1100.0,
+      "latency_ms_p95": 2200.0,
+      "latency_ms_mean": 1276.2103281662955
+    },
+    {
+      "users": 4,
+      "exit_code": 0,
+      "started_at_utc": "2026-10-26T14:15:27.342430+00:00",
+      "finished_at_utc": "2026-10-26T14:15:59.377300+00:00",
+      "started": 54,
+      "completed": 54,
+      "failures": 0,
+      "incomplete": 0,
+      "elapsed_seconds_including_drain": 31.738176459009992,
+      "requests_per_second": 1.701421002234998,
+      "latency_ms_p50": 2300.0,
+      "latency_ms_p95": 2600.0,
+      "latency_ms_mean": 2283.1242862583304
+    },
+    {
+      "users": 8,
+      "exit_code": 0,
+      "started_at_utc": "2026-10-26T14:15:59.377420+00:00",
+      "finished_at_utc": "2026-10-26T14:16:32.690387+00:00",
+      "started": 77,
+      "completed": 77,
+      "failures": 0,
+      "incomplete": 0,
+      "elapsed_seconds_including_drain": 33.00368883300689,
+      "requests_per_second": 2.3330725359097597,
+      "latency_ms_p50": 3000.0,
+      "latency_ms_p95": 4500.0,
+      "latency_ms_mean": 3279.274904830782
+    },
+    {
+      "users": 16,
+      "exit_code": 0,
+      "started_at_utc": "2026-10-26T14:16:32.690532+00:00",
+      "finished_at_utc": "2026-10-26T14:17:05.320714+00:00",
+      "started": 72,
+      "completed": 72,
+      "failures": 0,
+      "incomplete": 0,
+      "elapsed_seconds_including_drain": 32.30225295899436,
+      "requests_per_second": 2.2289466958047597,
+      "latency_ms_p50": 6900.0,
+      "latency_ms_p95": 8800.0,
+      "latency_ms_mean": 6876.895228083312
+    }
+  ],
+  "app_name": "<one-instance-app>",
+  "compute_size": "MEDIUM",
+  "configured_instances": 1
+}

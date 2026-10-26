@@ -1,4 +1,4 @@
-"""Compare two Locust summary.json files from the same App and workload."""
+"""Compare two Locust summary.json files from the same workload."""
 
 import argparse
 import json
@@ -10,13 +10,16 @@ def rate(row: dict | None) -> str:
 
 
 def compare(baseline: dict, scaled: dict) -> str:
-    for key in ("app_url", "profile", "prompt", "duration_seconds_per_level"):
+    for key in ("profile", "prompt", "duration_seconds_per_level"):
         if baseline.get(key) != scaled.get(key):
             raise ValueError(f"Benchmark inputs differ at {key}")
+    if baseline.get("compute_size") != scaled.get("compute_size"):
+        raise ValueError("Benchmark Apps use different compute sizes")
     one = {row["users"]: row for row in baseline["levels"]}
     many = {row["users"]: row for row in scaled["levels"]}
     lines = [
-        f"App: {baseline['app_url']}",
+        f"One-instance App: {baseline['app_url']}",
+        f"Three-instance App: {scaled['app_url']}",
         f"Observed replicas: {baseline['replica_count_observed']} → {scaled['replica_count_observed']}",
         "",
         "| Users | Baseline full-run req/s | Scaled full-run req/s | Gain | Baseline p95 ms | Scaled p95 ms | Failures (base / scaled) |",

@@ -1,0 +1,79 @@
+{
+  "label": "three-instances",
+  "recorded_at_utc": "2026-10-26T14:19:36.946899+00:00",
+  "app_url": "<three-instances-app-url>",
+  "profile": "<profile>",
+  "prompt": "Reply with exactly one short sentence saying hello.",
+  "duration_seconds_per_level": 30,
+  "replica_count_observed": 3,
+  "replica_request_counts": {
+    "process-1": 25,
+    "process-2": 18,
+    "process-3": 17
+  },
+  "levels": [
+    {
+      "users": 1,
+      "exit_code": 0,
+      "started_at_utc": "2026-10-26T14:17:29.848248+00:00",
+      "finished_at_utc": "2026-10-26T14:18:00.733808+00:00",
+      "started": 22,
+      "completed": 22,
+      "failures": 0,
+      "incomplete": 0,
+      "elapsed_seconds_including_drain": 30.55988891699235,
+      "requests_per_second": 0.7198979047259312,
+      "latency_ms_p50": 1100.0,
+      "latency_ms_p95": 2200.0,
+      "latency_ms_mean": 1387.580729181619
+    },
+    {
+      "users": 4,
+      "exit_code": 0,
+      "started_at_utc": "2026-10-26T14:18:00.733969+00:00",
+      "finished_at_utc": "2026-10-26T14:18:32.022114+00:00",
+      "started": 72,
+      "completed": 72,
+      "failures": 0,
+      "incomplete": 0,
+      "elapsed_seconds_including_drain": 30.987159790995065,
+      "requests_per_second": 2.3235430573706,
+      "latency_ms_p50": 2200.0,
+      "latency_ms_p95": 2400.0,
+      "latency_ms_mean": 1701.998627874976
+    },
+    {
+      "users": 8,
+      "exit_code": 0,
+      "started_at_utc": "2026-10-26T14:18:32.022238+00:00",
+      "finished_at_utc": "2026-10-26T14:19:04.299052+00:00",
+      "started": 119,
+      "completed": 119,
+      "failures": 0,
+      "incomplete": 0,
+      "elapsed_seconds_including_drain": 31.965508499997668,
+      "requests_per_second": 3.7227626145853017,
+      "latency_ms_p50": 2200.0,
+      "latency_ms_p95": 2600.0,
+      "latency_ms_mean": 2067.038839645762
+    },
+    {
+      "users": 16,
+      "exit_code": 0,
+      "started_at_utc": "2026-10-26T14:19:04.299194+00:00",
+      "finished_at_utc": "2026-10-26T14:19:36.946887+00:00",
+      "started": 176,
+      "completed": 176,
+      "failures": 0,
+      "incomplete": 0,
+      "elapsed_seconds_including_drain": 32.33101095799066,
+      "requests_per_second": 5.443689967773845,
+      "latency_ms_p50": 2600.0,
+      "latency_ms_p95": 4300.0,
+      "latency_ms_mean": 2828.673457415789
+    }
+  ],
+  "app_name": "<three-instances-app>",
+  "compute_size": "MEDIUM",
+  "configured_instances": 3
+}

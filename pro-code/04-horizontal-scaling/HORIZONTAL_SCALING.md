@@ -1,164 +1,54 @@
-# Horizontal scaling walkthrough
+# Two-App horizontal scaling walkthrough
 
-See [the 2026-10-23 live benchmark](BENCHMARK_RESULTS.md) for measured results and the model
-quota limitation observed in the real-agent run.
+The [README](README.md) has the complete deploy and Locust commands. This demo deploys identical
+source to two separate Databricks Apps, fixed at one and three instances. The comparison CLI reads
+their URLs, waits for both Apps to report the expected configured, active, and running counts, then
+tests them sequentially. It never changes App capacity. Each App keeps its own URL and Runtime
+Store; the declared Session Store and Memory Store bindings are shared. Both Apps should use the
+same compute size and synthetic workload settings.
 
-This standalone sample uses the same LangGraph agent as Hello World to show an App serving requests
-from more than one replica and to measure end-to-end agent throughput. It changes the **fixed**
-instance count from 1 to 3. Databricks Apps documentation does not describe a request-rate or CPU
-trigger that automatically changes this count. The scaling event in this demo is the operator's
-instance-count update.
+## Request path
 
-## What the platform and AgentKit do
-
-- Databricks puts 1–5 instances behind one App URL. Each instance runs this project's single
-  `uvicorn` server process. Compute cost grows with instance count. A workspace can have up to 20
-  horizontally scaled Apps by default. Databricks recommends at least 2 instances for availability.
-  Newly created scaled Apps have no pre-installed Python libraries; this project's `pyproject.toml`
-  declares its runtime dependencies and `app.yaml` starts them through `uv run`.
-- The router gives browsers a sticky cookie. API callers can send `X-Routing-Key`; this benchmark
-  uses a fresh UUID for each new session and keeps that value as its routing key. Affinity is
-  best effort, so a session can move during failures, deployments, or rebalancing.
-- `DurableAgentServer` already uses a deployed, shared Runtime Store for invocation status,
-  results, events, and recovery. Its `recover` hook is registered in `runtime/main.py`. No
-  replica-aware server change is needed.
-- The LangGraph checkpointer needs the **bound managed Session Store** in `agent.toml` for
-  conversation state to survive a move. An in-process checkpointer in `agentbricks dev` cannot
-  demonstrate cross-replica continuity. The existing Memory Store is separate from both stores.
-- `/api/replica` returns a random ID generated once per server process. It is diagnostic only and
-  holds no user or conversation state. This comparison assumes one Uvicorn worker per App instance;
-  with more workers, the route counts processes rather than instances.
-
-## Deploy and measure
-
-Choose a named workspace profile yourself. This project never selects one implicitly. The profile
-must have permissions to deploy Apps, provision the stores in `agent.toml`, call the selected model,
-and invoke the deployed App. The example is a single-user sandbox, so run the load test only with
-your own authorized identity. `APP_BEARER_TOKEN` is optional for an M2M caller with App access;
-otherwise the benchmark gets a U2M token from `databricks auth token --profile`.
-
-For a complete live one-versus-three run after deployment, use the load-test CLI. It changes the
-fixed App count, waits for each count to become ready, streams Locust's CLI statistics, and saves
-Locust HTML/CSV reports plus a comparison page. It restores the original count on completion or
-failure:
-
-```bash
-cd pro-code/04-horizontal-scaling
-uv run --frozen agentbricks --profile <profile> deploy horizontal-scaling-demo --source . --instances 1
-cd scripts/loadtest
-uv sync --locked
-uv run --locked python run_comparison.py \
-  --profile <profile> --app-name agent-bricks-horizontal-scaling-demo \
-  --users 1,4,8,16 --duration-seconds 30
+```text
+Locust → App URL → Apps router → instance → Uvicorn → DurableAgentServer → LangGraph
+                                                   ↘ Runtime Store / Session Store
 ```
 
-The sample's `app.yaml` enables the controlled synthetic workload by default. This is a manual
-capacity change; no load threshold adds or removes instances automatically. To see each CLI step,
-the equivalent manual commands follow.
+Each instance runs one Uvicorn worker by default. `/api/replica` identifies the server process;
+the CLI probes it with distinct `X-Routing-Key` values and requires one or three process IDs.
+For every invocation, Locust sends a fresh invocation ID and session ID. The session ID also serves
+as that request's routing key, so independent requests can reach different processes. Sticky
+routing is best effort. The managed Session Store preserves graph checkpoints across replicas;
+`DurableAgentServer` uses the shared Runtime Store for invocation status and recovery. The Memory
+Store holds long-term facts and is separate from both.
 
-### Manual commands
+The sample's `app.yaml` enables `SCALING_BENCHMARK_MOCK_MODEL=true` and
+`SCALING_BENCHMARK_CPU_MS=100`. The synthetic response still runs through the graph and stores,
+but does not call the model service, clock, or memory tools. To test the real model, remove those
+settings and redeploy both Apps from the same source. Model quotas can then cap throughput.
 
-```bash
-cd pro-code/04-horizontal-scaling
-databricks auth profiles
-uv sync --frozen --group dev
-uv run --frozen agentbricks doctor .
-uv run --frozen agentbricks --profile <profile> deploy horizontal-scaling-demo --source . --instances 1
-databricks apps get agent-bricks-horizontal-scaling-demo --profile <profile> -o json
-```
+## Reading the results
 
-The last output should show a running App, a URL, and `compute_min_instances` and
-`compute_max_instances` of 1. Use that URL below. Run the same prompt, duration, and Locust user
-levels at each instance count. Each request gets a fresh invocation ID and session ID, so the
-server's per-session serialization does not turn the benchmark into a single queue. The load
-generator lives in a separate environment and uses Locust for scheduling, latency histograms, CSV,
-and HTML reports. Its foreground POST measures the complete agent invocation.
+The CLI runs each requested user level for 30 seconds by default, drains in-flight requests, and
+uses final completed requests divided by elapsed time for its full-run rate. It reports p95 latency
+and failures, and links to native Locust HTML/CSV for each level. CSV/HTML may snapshot before the
+last drained requests; `final-summary.json` and `summary.json` include them. Compare runs with the
+same prompt, user levels, compute size, source, and store bindings. The CLI checks the measurable
+parts of that setup; deploy both Apps from the same checkout.
 
-```bash
-cd scripts/loadtest
-uv sync --locked
-uv run --locked python run.py \
-  --profile <profile> \
-  --app-url https://<app-url> \
-  --label one-instance \
-  --live-stats \
-  --users 1,4,8,16 --duration-seconds 30 \
-  --output-dir results/one-instance
-```
+The [two-App benchmark](BENCHMARK_RESULTS.md) measured **2.23 → 5.44 req/s (2.44×)** at 16 users,
+with zero failed or incomplete requests and 618 `OK` traces across all stages and preflights. The
+same document also retains the older benchmark that changed one App's fixed count. A short
+real-model run did not establish an App throughput gain because the shared model service became a
+limit.
 
-**Trigger the scale change** on the same App with the Databricks Apps CLI:
-
-```bash
-databricks apps create-update agent-bricks-horizontal-scaling-demo \
-  --json '{"update_mask":"compute_min_instances,compute_max_instances","app":{"compute_min_instances":3,"compute_max_instances":3}}' \
-  --no-wait \
-  --profile <profile>
-databricks apps get agent-bricks-horizontal-scaling-demo --profile <profile> -o json
-```
-
-Wait for the update to finish, then confirm `compute_min_instances` and
-`compute_max_instances` are 3. The docs say the App keeps serving traffic during a count change.
-The Agent Bricks CLI can also change the count with `uv run --frozen agentbricks --profile
-<profile> deploy horizontal-scaling-demo --source . --instances 3`; that path includes a new source
-deployment, so the Apps update isolates the compute change more clearly. Run the benchmark again:
-
-```bash
-uv run --locked python run.py \
-  --profile <profile> \
-  --app-url https://<app-url> \
-  --label three-instances \
-  --live-stats \
-  --users 1,4,8,16 --duration-seconds 30 \
-  --output-dir results/three-instances
-uv run --locked python compare.py \
-  results/one-instance/summary.json results/three-instances/summary.json
-```
-
-Each `users-*` directory holds native Locust HTML and CSV reports. The comparison table shows
-full-run throughput gain, p95 latency, and failures at each concurrency level. The full-run rate
-divides the final completed count by elapsed time through graceful shutdown, including the drain
-of in-flight requests; native CSV/HTML snapshots can be written before the final count settles.
-Show the App's configured count and the benchmark's `replica_count_observed` alongside it. An
-observed count of 3 proves the routing probe reached three server processes; it does not prove
-every invocation was evenly distributed. The gain at each level is the three-instance full-run
-rate divided by the one-instance full-run rate. Run more than once and compare at the same load. If the model
-endpoint, store, quota, or load generator saturates first, throughput may show little gain. Check
-the run's MLflow traces and App telemetry before attributing a plateau to Apps compute.
-
-The controlled App-capacity mode is enabled by these `app.yaml` entries:
-
-```yaml
-- name: SCALING_BENCHMARK_MOCK_MODEL
-  value: "true"
-- name: SCALING_BENCHMARK_CPU_MS
-  value: "100"
-```
-
-The mock returns a short synthetic message after bounded CPU work. It still runs the real graph
-and durable stores, but does not call the model service or exercise tools. Use the same values
-for both measured configurations. Remove the entries and redeploy to use the real model.
-If using the manual commands, set both instance values back to 1 when the extra capacity is no
-longer needed. The comparison CLI restores the original count automatically.
-
-Uvicorn workers are a separate knob within each App instance. Uvicorn can read `WEB_CONCURRENCY`,
-but this comparison keeps one worker per instance. A worker-count benchmark should hold the App
-at one instance and vary only `WEB_CONCURRENCY`; `/api/replica` then reports worker processes.
-
-## Agent Bricks CLI detail
-
-`databricks-agentbricks==0.6.0`, pinned in this example, accepts `agentbricks deploy
---instances 1..5`. In the 0.6.0 source, it creates a new App with both compute minimum and maximum
-set to that count. For an existing App, it sends a masked `databricks apps create-update` request.
-Omitting `--instances` preserves an existing App's scale. The JSON update command above was
-validated against the selected workspace during the live benchmark.
-No change to `DurableAgentServer` or this project's invocation adapter is needed for scaling.
+This demonstrates provisioned horizontal capacity. Neither setup includes a traffic-triggered
+autoscaling policy. More Uvicorn workers are a separate within-instance setting; they share that
+instance's CPU and memory. `DurableAgentServer` needs no scaling-specific code change.
 
 ## References
 
 - [Horizontal scaling for Databricks Apps](https://docs.databricks.com/aws/en/dev-tools/databricks-apps/horizontal-scaling)
 - [Agent Server and shared run state](https://docs.databricks.com/aws/en/agents/deploy/agent-server)
 - [Agent Bricks CLI](https://docs.databricks.com/aws/en/agents/custom-agents/agent-bricks-cli)
-- [Agent Bricks 0.6.0 deploy option](https://github.com/databricks/databricks-ai-bridge/blob/databricks-agentbricks-v0.6.0/integrations/agentbricks/src/databricks_agentbricks/cli/deploy.py)
-- [Agent Bricks 0.6.0 Apps client](https://github.com/databricks/databricks-ai-bridge/blob/databricks-agentbricks-v0.6.0/integrations/agentbricks/src/databricks_agentbricks/clients/apps_client.py)
 - [AgentKit runtime architecture](https://github.com/databricks/databricks-ai-bridge/blob/main/integrations/agentbricks/src/databricks_agentkit/runtime/ARCHITECTURE.md)
-- [Agent Bricks Locust load-test PR](https://github.com/databricks/databricks-ai-bridge/pull/785) — useful design reference; not part of the pinned 0.6.0 release

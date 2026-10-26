@@ -1,4 +1,30 @@
-# Horizontal scaling benchmark, 2026-10-23
+# Horizontal scaling benchmarks
+
+## Two separate Apps, 2026-10-26
+
+The standalone sample was deployed from the same checkout as two Medium Apps: one fixed at one
+instance and one fixed at three. Both used the same synthetic model settings, prompt, managed
+Session Store and Memory Store, and Locust runner. Each App had its own URL and Runtime Store.
+Before load, Apps reported the matching configured, active, and running counts; 60 distinct routing
+keys reached one and three server processes respectively. Locust then tested each ready App in
+sequence for 30 seconds per user level, with graceful drain and fresh IDs per invocation.
+
+| Concurrent users | 1 instance req/s | 3 instances req/s | Gain | p95 latency, 1 → 3 | Failures |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 0.78 | 0.72 | 0.92× | 2.2 → 2.2 s | 0 / 0 |
+| 4 | 1.70 | 2.32 | 1.37× | 2.6 → 2.4 s | 0 / 0 |
+| 8 | 2.33 | 3.72 | 1.60× | 4.5 → 2.6 s | 0 / 0 |
+| 16 | 2.23 | 5.44 | **2.44×** | 8.8 → 4.3 s | 0 / 0 |
+
+At 16 users, the final summaries recorded 72 and 176 completed requests. Across all eight
+stages, all **616 started requests completed**, with no failures or incomplete requests. The
+shared MLflow experiment had **618 `OK` traces**: those 616 requests plus one preflight
+invocation per App. The final rates include the drain after each 30-second stage. This is one
+short sweep in baseline-then-scaled order, so repeat it before treating the gain as a capacity
+estimate. The anonymized aggregates are [one instance](benchmark-results/2026-10-26/one-instance-controlled.json)
+and [three instances](benchmark-results/2026-10-26/three-instances-controlled.json).
+
+## Prior same-App benchmark, 2026-10-23
 
 The run used a staging workspace and Medium App compute. The same deployed source, App URL, Runtime
 Store, Session Store, prompt, and Locust runner were used within each one-versus-three pair.

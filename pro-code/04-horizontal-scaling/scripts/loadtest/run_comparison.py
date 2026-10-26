@@ -1,4 +1,4 @@
-"""Run and render a live one-versus-three Databricks Apps Locust comparison."""
+"""Compare two ready Databricks Apps with one and three fixed instances."""
 
 import argparse
 import html
@@ -22,35 +22,6 @@ def app_info(profile: str, app_name: str) -> dict:
     return json.loads(result.stdout)
 
 
-def set_instances(profile: str, app_name: str, minimum: int, maximum: int) -> None:
-    request = {
-        "update_mask": "compute_min_instances,compute_max_instances",
-        "app": {
-            "compute_min_instances": minimum,
-            "compute_max_instances": maximum,
-        },
-    }
-    print(f"Setting App instances to {minimum}–{maximum}...", flush=True)
-    result = subprocess.run(
-        [
-            "databricks",
-            "apps",
-            "create-update",
-            app_name,
-            "--json",
-            json.dumps(request),
-            "--no-wait",
-            "--profile",
-            profile,
-        ],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode:
-        raise RuntimeError(f"App update failed: {result.stderr.strip()}")
-
-
 def wait_for_instances(
     profile: str, app_name: str, count: int, timeout_seconds: int
 ) -> dict:
@@ -64,7 +35,7 @@ def wait_for_instances(
         active = info.get("compute_status", {}).get("active_instances")
         running = info.get("app_status", {}).get("running_instances")
         print(
-            f"App readiness: configured={configured}, active={active}, running={running}",
+            f"{app_name}: configured={configured}, active={active}, running={running}",
             flush=True,
         )
         if (
@@ -77,18 +48,6 @@ def wait_for_instances(
             return info
         if time.monotonic() >= deadline:
             raise TimeoutError(f"App did not reach {count} running instances")
-        time.sleep(5)
-
-
-def wait_for_update_idle(profile: str, app_name: str, timeout_seconds: int) -> dict:
-    """Let an accepted asynchronous update settle before attempting restoration."""
-    deadline = time.monotonic() + timeout_seconds
-    while True:
-        info = app_info(profile, app_name)
-        if info.get("compute_status", {}).get("state") != "UPDATING":
-            return info
-        if time.monotonic() >= deadline:
-            raise TimeoutError("App update did not settle before restoration")
         time.sleep(5)
 
 
@@ -121,7 +80,7 @@ def render_report(
 table{{border-collapse:collapse}}td,th{{border:1px solid #bbb;padding:.5rem;text-align:left}}
 pre{{overflow:auto;background:#f3f4f6;padding:1rem}}</style>
 <h1>One versus three App instances</h1>
-<p>Fixed instance counts changed by the CLI. Locust reports include latency and request charts.</p>
+<p>Two Apps deployed from the same source with fixed instance counts. Locust reports include latency and request charts.</p>
 <table><thead><tr><th>Users</th><th>One instance</th><th>Three instances</th></tr></thead>
 <tbody>{"".join(rows)}</tbody></table>
 <h2>CLI comparison</h2><pre>{html.escape(comparison)}</pre>
@@ -135,12 +94,13 @@ pre{{overflow:auto;background:#f3f4f6;padding:1rem}}</style>
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--profile", required=True)
-    parser.add_argument("--app-name", required=True)
+    parser.add_argument("--one-app-name", required=True)
+    parser.add_argument("--three-app-name", required=True)
     parser.add_argument("--users", default="1,4,8,16")
     parser.add_argument("--duration-seconds", type=int, default=30)
     parser.add_argument("--timeout", type=int, default=120)
     parser.add_argument("--probe-keys", type=int, default=60)
-    parser.add_argument("--scale-wait-seconds", type=int, default=600)
+    parser.add_argument("--ready-wait-seconds", type=int, default=600)
     parser.add_argument(
         "--prompt", default="Reply with exactly one short sentence saying hello."
     )
@@ -150,12 +110,9 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Hide periodic Locust CLI statistics",
     )
-    parser.add_argument(
-        "--leave-at-three",
-        action="store_true",
-        help="Keep three instances after a successful run",
-    )
     args = parser.parse_args()
+    if args.one_app_name == args.three_app_name:
+        parser.error("the two App names must differ")
     try:
         args.users = [int(value) for value in args.users.split(",")]
     except ValueError:
@@ -168,7 +125,7 @@ def parse_args() -> argparse.Namespace:
             args.duration_seconds,
             args.timeout,
             args.probe_keys,
-            args.scale_wait_seconds,
+            args.ready_wait_seconds,
         )
         < 1
     ):
@@ -185,82 +142,60 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    initial = app_info(args.profile, args.app_name)
-    original = (
-        initial.get("compute_min_instances"),
-        initial.get("compute_max_instances"),
-    )
-    if not all(isinstance(value, int) for value in original):
-        raise RuntimeError("App has no readable initial instance configuration")
-    if original[0] != original[1] or original[0] not in (1, 2, 3, 4, 5):
-        raise RuntimeError(
-            "This comparison requires an App with a fixed 1–5 instance count"
-        )
-    url = initial.get("url")
-    if not isinstance(url, str) or not url.startswith("https://"):
-        raise RuntimeError("App has no HTTPS URL; deploy it before benchmarking")
+    apps = []
+    for count, label, name in (
+        (1, "one-instance", args.one_app_name),
+        (3, "three-instances", args.three_app_name),
+    ):
+        info = wait_for_instances(args.profile, name, count, args.ready_wait_seconds)
+        url = info.get("url")
+        if not isinstance(url, str) or not url.startswith("https://"):
+            raise RuntimeError(
+                f"{name} has no HTTPS URL; deploy it before benchmarking"
+            )
+        apps.append((count, label, name, url, info))
+    if apps[0][4].get("compute_size") != apps[1][4].get("compute_size"):
+        raise RuntimeError("Apps use different compute sizes; use matching sizes")
     args.output_dir.mkdir(parents=True)
-    print(f"App: {args.app_name}; initial instance range: {original}", flush=True)
-    print("This command manually sets one instance, then three instances.", flush=True)
-    success = False
-    changed = False
-    current = original
-    try:
-        summaries = []
-        for count, label in ((1, "one-instance"), (3, "three-instances")):
-            if current != (count, count):
-                # A request may take effect even if the CLI loses its response.
-                # Attempt restoration after any update attempt.
-                changed = True
-                set_instances(args.profile, args.app_name, count, count)
-                current = (count, count)
-            wait_for_instances(
-                args.profile, args.app_name, count, args.scale_wait_seconds
+    summaries = []
+    for count, label, name, url, info in apps:
+        print(f"Testing {name}: {count} instances at {url}", flush=True)
+        (args.output_dir / label).mkdir()
+        summary = run(
+            argparse.Namespace(
+                profile=args.profile,
+                app_url=url,
+                label=label,
+                users=args.users,
+                duration_seconds=args.duration_seconds,
+                timeout=args.timeout,
+                probe_keys=args.probe_keys,
+                prompt=args.prompt,
+                output_dir=args.output_dir / label,
+                live_stats=not args.quiet_locust,
+                expected_replicas=count,
             )
-            summary = run(
-                argparse.Namespace(
-                    profile=args.profile,
-                    app_url=url,
-                    label=label,
-                    users=args.users,
-                    duration_seconds=args.duration_seconds,
-                    timeout=args.timeout,
-                    probe_keys=args.probe_keys,
-                    prompt=args.prompt,
-                    output_dir=args.output_dir / label,
-                    live_stats=not args.quiet_locust,
-                    expected_replicas=count,
-                )
-            )
-            summaries.append(summary)
-        comparison = compare(*summaries)
-        (args.output_dir / "comparison.md").write_text(comparison + "\n")
-        report = render_report(args.output_dir, *summaries, comparison)
-        print(f"\n{comparison}\n", flush=True)
-        print(f"Locust reports: {report.resolve()}", flush=True)
-        if any(
-            row["exit_code"] or row["failures"] or row["incomplete"]
-            for summary in summaries
-            for row in summary["levels"]
-        ):
-            raise SystemExit(
-                "One or more Locust stages failed; inspect the saved reports"
-            )
-        success = True
-    finally:
-        if changed and not (args.leave_at_three and success):
-            latest = wait_for_update_idle(
-                args.profile, args.app_name, args.scale_wait_seconds
-            )
-            if (
-                latest.get("compute_min_instances"),
-                latest.get("compute_max_instances"),
-            ) != original:
-                set_instances(args.profile, args.app_name, *original)
-                wait_for_instances(
-                    args.profile, args.app_name, original[0], args.scale_wait_seconds
-                )
-                print(f"Restored original instance range: {original}", flush=True)
+        )
+        summary.update(
+            app_name=name,
+            compute_size=info.get("compute_size"),
+            configured_instances=count,
+        )
+        (args.output_dir / label / "summary.json").write_text(
+            json.dumps(summary, indent=2) + "\n"
+        )
+        summaries.append(summary)
+    comparison = compare(*summaries)
+    (args.output_dir / "comparison.md").write_text(comparison + "\n")
+    report = render_report(args.output_dir, *summaries, comparison)
+    print(f"\n{comparison}\n", flush=True)
+    print(f"Locust reports: {report.resolve()}", flush=True)
+    if any(
+        row["exit_code"] or row["failures"] or row["incomplete"]
+        for summary in summaries
+        for row in summary["levels"]
+    ):
+        raise SystemExit("One or more Locust stages failed; inspect the saved reports")
 
 
 if __name__ == "__main__":
