@@ -26,7 +26,8 @@ instance-count update.
   conversation state to survive a move. An in-process checkpointer in `agentbricks dev` cannot
   demonstrate cross-replica continuity. The existing Memory Store is separate from both stores.
 - `/api/replica` returns a random ID generated once per server process. It is diagnostic only and
-  holds no user or conversation state. Probe it with many distinct routing keys to see distribution.
+  holds no user or conversation state. This comparison assumes one Uvicorn worker per App instance;
+  with more workers, the route counts processes rather than instances.
 
 ## Deploy and measure
 
@@ -35,6 +36,27 @@ must have permissions to deploy Apps, provision the stores in `agent.toml`, call
 and invoke the deployed App. The example is a single-user sandbox, so run the load test only with
 your own authorized identity. `APP_BEARER_TOKEN` is optional for an M2M caller with App access;
 otherwise the benchmark gets a U2M token from `databricks auth token --profile`.
+
+For a complete live one-versus-three run after deployment, use the load-test CLI. It changes the
+fixed App count, waits for each count to become ready, streams Locust's CLI statistics, and saves
+Locust HTML/CSV reports plus a comparison page. It restores the original count on completion or
+failure:
+
+```bash
+cd pro-code/04-horizontal-scaling
+uv run --frozen agentbricks --profile <profile> deploy horizontal-scaling-demo --source . --instances 1
+cd scripts/loadtest
+uv sync --locked
+uv run --locked python run_comparison.py \
+  --profile <profile> --app-name agent-bricks-horizontal-scaling-demo \
+  --users 1,4,8,16 --duration-seconds 30
+```
+
+The sample's `app.yaml` enables the controlled synthetic workload by default. This is a manual
+capacity change; no load threshold adds or removes instances automatically. To see each CLI step,
+the equivalent manual commands follow.
+
+### Manual commands
 
 ```bash
 cd pro-code/04-horizontal-scaling
@@ -59,6 +81,7 @@ uv run --locked python run.py \
   --profile <profile> \
   --app-url https://<app-url> \
   --label one-instance \
+  --live-stats \
   --users 1,4,8,16 --duration-seconds 30 \
   --output-dir results/one-instance
 ```
@@ -68,6 +91,7 @@ uv run --locked python run.py \
 ```bash
 databricks apps create-update agent-bricks-horizontal-scaling-demo \
   --json '{"update_mask":"compute_min_instances,compute_max_instances","app":{"compute_min_instances":3,"compute_max_instances":3}}' \
+  --no-wait \
   --profile <profile>
 databricks apps get agent-bricks-horizontal-scaling-demo --profile <profile> -o json
 ```
@@ -83,6 +107,7 @@ uv run --locked python run.py \
   --profile <profile> \
   --app-url https://<app-url> \
   --label three-instances \
+  --live-stats \
   --users 1,4,8,16 --duration-seconds 30 \
   --output-dir results/three-instances
 uv run --locked python compare.py \
@@ -100,8 +125,7 @@ rate divided by the one-instance full-run rate. Run more than once and compare a
 endpoint, store, quota, or load generator saturates first, throughput may show little gain. Check
 the run's MLflow traces and App telemetry before attributing a plateau to Apps compute.
 
-For a controlled App-capacity run when FMAPI quotas dominate, add these entries to the existing
-`env` list in `app.yaml` and redeploy once before measuring either instance count:
+The controlled App-capacity mode is enabled by these `app.yaml` entries:
 
 ```yaml
 - name: SCALING_BENCHMARK_MOCK_MODEL
@@ -112,8 +136,13 @@ For a controlled App-capacity run when FMAPI quotas dominate, add these entries 
 
 The mock returns a short synthetic message after bounded CPU work. It still runs the real graph
 and durable stores, but does not call the model service or exercise tools. Use the same values
-for both measured configurations. Remove the entries and redeploy to return to the real model.
-After the demo, set both instance values back to 1 if the extra capacity is no longer needed.
+for both measured configurations. Remove the entries and redeploy to use the real model.
+If using the manual commands, set both instance values back to 1 when the extra capacity is no
+longer needed. The comparison CLI restores the original count automatically.
+
+Uvicorn workers are a separate knob within each App instance. Uvicorn can read `WEB_CONCURRENCY`,
+but this comparison keeps one worker per instance. A worker-count benchmark should hold the App
+at one instance and vary only `WEB_CONCURRENCY`; `/api/replica` then reports worker processes.
 
 ## Agent Bricks CLI detail
 

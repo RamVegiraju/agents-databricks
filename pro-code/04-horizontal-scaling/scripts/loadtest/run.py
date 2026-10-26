@@ -84,6 +84,12 @@ def run(args: argparse.Namespace) -> dict:
     url = args.app_url.rstrip("/")
     token = token_for(args.profile)
     replicas = probe_replicas(url, token, args.probe_keys, args.timeout)
+    expected = getattr(args, "expected_replicas", None)
+    if expected is not None and len(replicas) != expected:
+        raise RuntimeError(
+            f"Expected {expected} server processes, observed {len(replicas)}; "
+            "check App status or increase --probe-keys"
+        )
     preflight(url, token, args.prompt, args.timeout)
     args.output_dir.mkdir(parents=True, exist_ok=True)
     environment = os.environ.copy()
@@ -97,6 +103,7 @@ def run(args: argparse.Namespace) -> dict:
         stage = args.output_dir / f"users-{users}"
         stage.mkdir(exist_ok=True)
         environment["LOADTEST_SUMMARY_FILE"] = str(stage / "final-summary.json")
+        started_at = datetime.now(UTC)
         command = [
             sys.executable,
             "-m",
@@ -119,12 +126,21 @@ def run(args: argparse.Namespace) -> dict:
             "--csv-full-history",
             "--html",
             str(stage / "locust.html"),
-            "--only-summary",
         ]
+        if not getattr(args, "live_stats", False):
+            command.append("--only-summary")
         print(f"Running {users} Locust users for {args.duration_seconds}s", flush=True)
         completed = subprocess.run(command, env=environment, check=False)
         stats = read_stats(stage / "final-summary.json")
-        levels.append({"users": users, "exit_code": completed.returncode, **stats})
+        levels.append(
+            {
+                "users": users,
+                "exit_code": completed.returncode,
+                "started_at_utc": started_at.isoformat(),
+                "finished_at_utc": datetime.now(UTC).isoformat(),
+                **stats,
+            }
+        )
         if completed.returncode != 0:
             break
     summary = {
@@ -153,6 +169,9 @@ def main() -> None:
     parser.add_argument("--duration-seconds", type=int, default=30)
     parser.add_argument("--timeout", type=int, default=120)
     parser.add_argument("--probe-keys", type=int, default=60)
+    parser.add_argument(
+        "--live-stats", action="store_true", help="Show Locust's live CLI statistics"
+    )
     parser.add_argument(
         "--prompt", default="Reply with exactly one short sentence saying hello."
     )

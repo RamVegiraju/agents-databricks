@@ -1,8 +1,11 @@
-# Horizontal scaling for an Agent Bricks App
+# Manual horizontal scaling for an Agent Bricks App
 
 This standalone LangGraph agent uses the same durable server, Session Store, and Memory Store at
 one and three fixed Databricks App instances. A diagnostic route confirms that requests reach
 distinct server processes; Locust measures completed invocations at each concurrency level.
+The CLI changes the count explicitly; traffic does not trigger autoscaling.
+The agent has one local UTC clock tool and managed memory tools; no Genie or MCP service is bound.
+The controlled benchmark calls neither the clock nor the memory tools.
 
 ## Measured result
 
@@ -20,7 +23,7 @@ completed without failure; MLflow trace counts matched the Locust totals. A real
 shared model quota, so it could not establish an App throughput gain. This is one short run per
 configuration, not a capacity estimate. See [benchmark evidence](BENCHMARK_RESULTS.md).
 
-## Run the sample
+## Run the live comparison
 
 Requires Python 3.11+, `uv`, Databricks CLI, an explicitly chosen profile, and access to deploy an
 App and its stores. From the repository root:
@@ -30,8 +33,17 @@ cd pro-code/04-horizontal-scaling
 uv sync --frozen --group dev
 uv run --frozen pytest -q
 uv run --frozen agentbricks doctor .
+uv run --frozen agentbricks --profile <profile> deploy horizontal-scaling-demo --source . --instances 1
+cd scripts/loadtest
+uv sync --locked
+uv run --locked python run_comparison.py \
+  --profile <profile> --app-name agent-bricks-horizontal-scaling-demo \
+  --users 1,4,8,16 --duration-seconds 30
 ```
 
-Follow the [scaling walkthrough](HORIZONTAL_SCALING.md) to deploy with one instance, run the
-Locust sweep, update the same App to three instances, and compare results. The benchmark model is
-opt-in; normal startup uses the real model. `DurableAgentServer` needs no scaling change.
+Locust prints live CLI statistics. The command saves native HTML/CSV for every user level plus a
+comparison page under `scripts/loadtest/results/comparison-<timestamp>/`, then restores the App's
+original instance count. The sample's `app.yaml` enables the controlled benchmark model by
+default. Remove those two environment entries and redeploy to try the real model; shared model
+quotas can then limit throughput. See the [walkthrough](HORIZONTAL_SCALING.md) for the manual
+commands and design details. `DurableAgentServer` needs no scaling change.

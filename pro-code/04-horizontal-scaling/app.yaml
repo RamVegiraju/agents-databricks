@@ -1,4 +1,9 @@
 command: ["uv", "run", "start-server"]
+env:
+  - name: SCALING_BENCHMARK_MOCK_MODEL
+    value: "true"
+  - name: SCALING_BENCHMARK_CPU_MS
+    value: "100"
 # databricks apps listen by default on port 8000
 #
 # Agent Bricks injects the deployed Runtime Store endpoint. The LangGraph checkpointer remains

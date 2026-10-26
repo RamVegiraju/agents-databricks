@@ -7,7 +7,7 @@ Independent Agent Bricks examples:
 | [Hello World + memory](pro-code/01-hello-memory/README.md) | LangGraph, tools, sessions, and managed memory |
 | [Genie supervisor](pro-code/02-genie-supervisor/README.md) | Delegation across Genie agents |
 | [Retail assistant](pro-code/03-retail-assistant/README.md) | Chat, Genie, AI Search, and external MCP |
-| [Horizontal scaling](pro-code/04-horizontal-scaling/README.md) | One versus three App instances with Locust |
+| [Manual App scale-out](pro-code/04-horizontal-scaling/README.md) | One versus three fixed instances with Locust |
 | [Lower-code Genie Agents](lower-code/genie-agents/README.md) | Curated Genie definitions and synthetic data |
 
 In the scaling sample's controlled 16-user run, three instances completed **5.33 req/s** versus
