@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
-# Run isolated, locked tests without calling workspace services or enabling live tests.
+# Run isolated tests from frozen locks without calling workspace services.
 set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 export RUN_LIVE_TESTS=0
 export AGENTBRICKS_DISABLE_TELEMETRY=1
 export AGENTBRICKS_DISABLE_AGENT_HINT=1
-for SAMPLE in pro-code/01-hello-memory pro-code/02-genie-supervisor pro-code/03-retail-assistant pro-code/04-horizontal-scaling lower-code/genie-agents; do
+for SAMPLE in pro-code/01-agentbricks-cli pro-code/02-genie-supervisor pro-code/03-retail-assistant pro-code/04-horizontal-scaling lower-code/genie-agents; do
   (
     cd "$REPO_ROOT/$SAMPLE"
-    uv run --offline --frozen pytest -q
+    uv run --frozen pytest -q
     if [[ "$SAMPLE" == pro-code/* ]]; then
-      uv run --offline --frozen agentbricks doctor .
+      uv run --frozen agentbricks doctor .
     fi
   )
 done
+(
+  cd "$REPO_ROOT/pro-code/04-horizontal-scaling/scripts/loadtest"
+  uv run --frozen python -m unittest discover -p 'test_*.py'
+)

@@ -24,8 +24,10 @@ Store holds long-term facts and is separate from both.
 
 The sample's `app.yaml` enables `SCALING_BENCHMARK_MOCK_MODEL=true` and
 `SCALING_BENCHMARK_CPU_MS=100`. The synthetic response still runs through the graph and stores,
-but does not call the model service, clock, or memory tools. To test the real model, remove those
-settings and redeploy both Apps from the same source. Model quotas can then cap throughput.
+but deliberately occupies the worker's event loop for roughly 100 ms and does not call the model
+service, clock, or memory tools. This isolates App capacity under CPU work; an I/O-heavy agent can
+scale differently. To test the real model, remove those settings and redeploy both Apps from the
+same source. Model quotas can then cap throughput.
 
 ## Reading the results
 

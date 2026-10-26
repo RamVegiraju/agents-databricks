@@ -1,4 +1,4 @@
-"""Opt-in deterministic model for measuring App capacity without FMAPI quotas."""
+"""Synthetic model for measuring App capacity without model-service quotas."""
 
 import hashlib
 import time
@@ -19,6 +19,7 @@ class BenchmarkModel:
         return self
 
     async def ainvoke(self, messages: list[Any]) -> AIMessage:
+        # Deliberately occupy one worker's event loop to model per-request CPU work.
         deadline = time.perf_counter() + self.cpu_ms / 1000
         digest = b"agent-bricks-scaling-benchmark"
         while time.perf_counter() < deadline:

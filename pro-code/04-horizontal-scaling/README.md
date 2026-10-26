@@ -7,7 +7,8 @@ exercises the graph and durable stores without calling a model endpoint or tools
 
 ## Run the demo
 
-Choose an authorized Databricks profile. From the repository root:
+Use a Databricks CLI profile for a workspace where you can create Apps, managed stores, and an
+MLflow experiment, with capacity for four App instances. From the repository root:
 
 ```bash
 cd pro-code/04-horizontal-scaling
@@ -15,8 +16,8 @@ uv sync --frozen --group dev
 uv run --frozen agentbricks --profile <profile> deploy hs-one --source . --instances 1
 uv run --frozen agentbricks --profile <profile> deploy hs-three --source . --instances 3
 cd scripts/loadtest
-uv sync --locked
-uv run --locked python run_comparison.py \
+uv sync --frozen
+uv run --frozen python run_comparison.py \
   --profile <profile> \
   --one-app-name agent-bricks-hs-one \
   --three-app-name agent-bricks-hs-three \
@@ -24,12 +25,17 @@ uv run --locked python run_comparison.py \
 ```
 
 Find both deployments under **Compute → Apps**. The comparison CLI waits for one and three active,
-running instances and completes a preflight invocation for each App, then shows live
+running instances and completes a preflight invocation for each App. It shows live
 Locust statistics in the terminal during each timed stage, then prints a final comparison with
 throughput, latency, completed requests, and failures. It saves HTML/CSV and
 `index.html` under `scripts/loadtest/results/comparison-<timestamp>/`. Both Apps remain deployed at
 their fixed counts afterward. See the [walkthrough](HORIZONTAL_SCALING.md) for architecture and
 benchmark details.
+
+The App and load tester have separate uv projects; run the load test commands from
+`scripts/loadtest`. `--profile` selects the workspace; deploy creates the stores and experiment
+declared in `agent.toml` there. Use unused deployment names if `hs-one` or `hs-three` already exist,
+and pass the corresponding `agent-bricks-<name>` values to the comparison command.
 
 ## Measured result
 

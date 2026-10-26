@@ -12,10 +12,10 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def load_renderer() -> ModuleType:
+def load_renderer(filename: str = "render_request.py") -> ModuleType:
     """Import the local renderer without installing a package."""
     spec = importlib.util.spec_from_file_location(
-        "render_request", ROOT / "render_request.py"
+        filename.removesuffix(".py"), ROOT / filename
     )
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
@@ -108,6 +108,20 @@ def test_render_rejects_unsafe_identifier() -> None:
         load_renderer().build_request(
             "sales", "catalog; DROP TABLE sales", "demo", "warehouse"
         )
+
+
+def test_sql_renderer_uses_same_namespace_as_genie_assets() -> None:
+    renderer = load_renderer("render_sql.py")
+    for kind in ("fixtures", "validate"):
+        sql = renderer.render_sql(kind, "sandbox", "demo")
+        assert "northstar_demo.retail" not in sql
+        assert "sandbox.demo.sales" in sql
+        assert "sandbox.demo.inventory" in sql
+    assert "CREATE SCHEMA IF NOT EXISTS sandbox.demo;" in renderer.render_sql(
+        "fixtures", "sandbox", "demo"
+    )
+    with pytest.raises(ValueError, match="simple SQL identifiers"):
+        renderer.render_sql("fixtures", "bad; DROP TABLE sales", "demo")
 
 
 def test_combined_retail_preserves_grain_with_warehouse_fanout() -> None:

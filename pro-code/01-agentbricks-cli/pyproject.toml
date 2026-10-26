@@ -1,21 +1,17 @@
 [project]
-name = "agentbricks-hello-memory"
+name = "agentbricks-cli-quickstart"
 version = "0.1.0"
-description = "LangGraph agent on the Agent Bricks durable runtime for Databricks Apps"
+description = "Minimal LangGraph agent deployed with the Agent Bricks CLI"
 readme = "README.md"
 authors = [
     { name = "Agent Developer", email = "developer@example.com" }
 ]
 requires-python = ">=3.11"
 dependencies = [
-    # Agent Bricks includes the HTTP runtime; this extra adds the langgraph framework adapter.
     "databricks-agentbricks[langgraph]==0.6.0",
     "databricks-langchain==0.21.0",
-    "mcp<2",  # langchain-mcp-adapters 0.3.x uses the MCP 1.x API.
     "uvicorn>=0.41.0",
     "python-dotenv>=1.2.1",
-    "databricks-sdk==0.154.0",
-    "databricks-agents>=1.9.3",
 ]
 
 [build-system]
@@ -42,8 +38,6 @@ asyncio_mode = "auto"
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F", "I", "UP"]
-# Preserve generated HTTP payload error semantics while checking the rest of the code.
-ignore = ["TRY004"]
 
 [project.scripts]
 start-server = "runtime.main:main"

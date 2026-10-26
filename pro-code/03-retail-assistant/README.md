@@ -50,12 +50,12 @@ workspace. No deployment or live resource setup has been performed.
 From this directory:
 
 ```bash
-uv sync
-uv run pytest
-uv run python -m scripts.ingest_policies
-uv run python -m scripts.create_search_index
-uv run python -m scripts.register_mcp
-uv run agentbricks doctor .
+uv sync --frozen
+uv run --frozen pytest
+uv run --frozen python -m scripts.ingest_policies
+uv run --frozen python -m scripts.create_search_index
+uv run --frozen python -m scripts.register_mcp
+uv run --frozen agentbricks doctor .
 ```
 
 Tests inject clients and model/tool outcomes; they do not verify live Genie,
@@ -72,12 +72,15 @@ workspace or warehouse.
 ### 1. Tabular data and curated Genie
 
 Use the shared fixtures and Genie setup under `../../lower-code/genie-agents/`
-(see its README for exact entrypoints). Expected tables:
+(see its README for exact entrypoints). Choose one existing catalog and a dedicated
+schema in the target workspace; pass that catalog/schema to both lower-code renderers
+and every script below. Use simple lowercase names because the MCP registration
+script validates them. The default names are
 `northstar_demo.retail.sales` and `northstar_demo.retail.inventory`, covering
 October 1–3, 2026 and an October 3 inventory snapshot. For mixed inventory prompts,
 configure a **retail Genie Agent containing both tables**. Use the combined
 `retail.serialized-space.json` asset there: from the lower-code directory,
-`uv run python render_request.py retail --warehouse-id YOUR_WAREHOUSE_ID` renders
+`uv run --frozen python render_request.py retail --catalog YOUR_CATALOG --schema YOUR_SCHEMA --warehouse-id YOUR_WAREHOUSE_ID` renders
 its create request offline. Its CTE examples preaggregate sales before joining
 inventory and scope stock to one snapshot date. Follow the lower-code README to
 review and explicitly create that resource later. Sample 02's sales-only Genie
@@ -86,7 +89,7 @@ answers only sales prompts.
 From this project directory, bind an existing retail Genie ID:
 
 ```bash
-agentbricks --profile YOUR_PROFILE tools add genie-agent YOUR_REAL_GENIE_ID --name retail --auth app
+uv run --frozen agentbricks --profile YOUR_PROFILE tools add genie-agent YOUR_REAL_GENIE_ID --name retail --auth app
 ```
 
 The installed command is `genie-agent`, not `genie`. It writes a `genie_agent`
@@ -100,8 +103,8 @@ poll and fetch query rows before treating SQL text as executed evidence.
 Preview, then explicitly ingest the small demo documents:
 
 ```bash
-uv run python -m scripts.ingest_policies --table northstar_demo.retail.policy_chunks
-uv run python -m scripts.ingest_policies --profile YOUR_PROFILE --warehouse-id YOUR_WAREHOUSE_ID --apply
+uv run --frozen python -m scripts.ingest_policies --table YOUR_CATALOG.YOUR_SCHEMA.policy_chunks
+uv run --frozen python -m scripts.ingest_policies --table YOUR_CATALOG.YOUR_SCHEMA.policy_chunks --profile YOUR_PROFILE --warehouse-id YOUR_WAREHOUSE_ID --apply
 ```
 
 The utility creates a CDF-enabled Delta source and MERGEs parameterized chunks
@@ -112,15 +115,15 @@ source table or explicitly reconcile removed IDs for those changes.
 Create an endpoint only if a suitable one does not already exist:
 
 ```bash
-uv run python -m scripts.create_search_index --action endpoint --profile YOUR_PROFILE --apply
-databricks vector-search-endpoints get-endpoint northstar-policies --profile YOUR_PROFILE
+uv run --frozen python -m scripts.create_search_index --action endpoint --endpoint YOUR_ENDPOINT --profile YOUR_PROFILE --apply
+databricks vector-search-endpoints get-endpoint YOUR_ENDPOINT --profile YOUR_PROFILE
 ```
 
 Wait for ONLINE, then create the index:
 
 ```bash
-uv run python -m scripts.create_search_index --action index --profile YOUR_PROFILE --apply
-databricks vector-search-indexes get-index northstar_demo.retail.policy_index --profile YOUR_PROFILE
+uv run --frozen python -m scripts.create_search_index --action index --endpoint YOUR_ENDPOINT --index YOUR_CATALOG.YOUR_SCHEMA.policy_index --table YOUR_CATALOG.YOUR_SCHEMA.policy_chunks --profile YOUR_PROFILE --apply
+databricks vector-search-indexes get-index YOUR_CATALOG.YOUR_SCHEMA.policy_index --profile YOUR_PROFILE
 ```
 
 The TRIGGERED Delta Sync index uses `databricks-gte-large-en` managed embeddings
@@ -128,7 +131,7 @@ and syncs citation columns. Wait for readiness. After later source changes,
 synchronize explicitly and check readiness again:
 
 ```bash
-uv run python -m scripts.create_search_index --action sync --profile YOUR_PROFILE --apply
+uv run --frozen python -m scripts.create_search_index --action sync --index YOUR_CATALOG.YOUR_SCHEMA.policy_index --profile YOUR_PROFILE --apply
 ```
 
 Set `POLICY_INDEX_NAME` to the real index. AI Search is the current product name;
@@ -144,22 +147,22 @@ availability before running. No credentials are bundled. This example uses a
 UC-managed bearer credential, not Databricks-managed per-user OAuth.
 
 ```bash
-uv run python -m scripts.register_mcp
+uv run --frozen python -m scripts.register_mcp --schema YOUR_CATALOG.YOUR_SCHEMA
 # Supply MCP_SERVER_TOKEN securely in the environment before applying.
-uv run python -m scripts.register_mcp --profile YOUR_PROFILE --apply
-agentbricks --profile YOUR_PROFILE tools add mcp northstar_demo.retail.github_docs --name github_docs --auth app
+uv run --frozen python -m scripts.register_mcp --schema YOUR_CATALOG.YOUR_SCHEMA --profile YOUR_PROFILE --apply
+uv run --frozen agentbricks --profile YOUR_PROFILE tools add mcp YOUR_CATALOG.YOUR_SCHEMA.github_docs --name github_docs --auth app
 ```
 
-The SDK script creates two distinct resources:
+The SDK script creates two distinct resources under the chosen catalog/schema:
 
-1. HTTP connection: `parent=schemas/northstar_demo.retail`, host/port/base path,
+1. HTTP connection: `parent=schemas/<catalog>.<schema>`, host/port/base path,
    bearer credential stored in UC.
-2. MCP Service: `source_connection.name=connections/northstar_demo.retail.github_readonly`,
+2. MCP Service: `source_connection.name=connections/<catalog>.<schema>.github_readonly`,
    with `get_file_contents` and `search_code` as its only exposed tools.
 
 AgentKit discovers the service tools and supplies them to the model and executor
 on the next graph construction. Its URL is
-`https://WORKSPACE_HOST/ai-gateway/mcp-services/northstar_demo.retail.github_docs`.
+`https://WORKSPACE_HOST/ai-gateway/mcp-services/<catalog>.<schema>.github_docs`.
 It uses neither legacy `is_mcp_connection=true` nor `/api/2.0/mcp/external/...`.
 
 If connection creation succeeds but service creation fails, inspect and reuse
@@ -193,12 +196,39 @@ implement trusted per-user identity and session ownership before multi-user use.
 
 ## Run the full stack later
 
-After setup/grants are reviewed, copy `.env.example` to `.env`, choose a profile,
-and set the real index. `agentbricks dev` starts the browser at
+After setup/grants are reviewed, copy `.env.example` to `.env`, replace `YOUR_PROFILE`
+and `YOUR_CATALOG.YOUR_SCHEMA.policy_index`, then start locally:
+
+```bash
+cp .env.example .env
+uv run --frozen agentbricks --profile YOUR_PROFILE dev
+```
+
+`agentbricks dev` starts the browser at
 `http://localhost:8000`. **Model and configured tool calls are live**. In installed
 0.6.0, default `dev` keeps tracing in a local SQLite-backed MLflow server, memory
 off and session history in process; it does not provision the declared managed
-stores. `dev` was not run for this change. Deployment is intentionally omitted.
+stores. `dev` was not run for this change.
+
+After local verification, review the Session Store, Memory Store, and tracing
+names in `agent.toml` for the target workspace. Add the index name to `app.yaml`
+and grant the App service principal access to it. The CLI cannot infer this
+Python tool dependency:
+
+```yaml
+env:
+  - name: POLICY_INDEX_NAME
+    value: YOUR_CATALOG.YOUR_SCHEMA.policy_index
+```
+
+Choose a unique App name and deploy:
+
+```bash
+uv run --frozen agentbricks --profile YOUR_PROFILE deploy YOUR_APP_NAME --source .
+databricks apps get YOUR_APP_NAME --profile YOUR_PROFILE
+```
+
+Deployment and live validation have not been performed for this sample.
 
 Example prompts and evidence to inspect:
 
@@ -214,8 +244,8 @@ Example prompts and evidence to inspect:
 Inspect browser tool events and MLflow traces. A plausible answer, binding or
 mocked test does not establish live integration success. Managed sessions and
 explicit actor-scoped memory tools remain wired. For automatic memory extraction
-and transcript recording see sample 01; checkpoint blobs alone are not an
-extraction-ready transcript.
+and transcript recording, see the [Session and memory tutorial](https://docs.databricks.com/aws/en/agents/agent-memory/existing-agent-tutorial);
+checkpoint blobs alone are not an extraction-ready transcript.
 
 ## Sources and validation scope
 

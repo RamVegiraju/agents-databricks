@@ -21,10 +21,10 @@ The explicit `StateGraph` is in `agent/supervisor.py`. Its model chooses delegat
 
 ## Shared synthetic domain and setup
 
-Use the SQL fixture and Genie configuration assets in [lower-code/genie-agents](../../lower-code/genie-agents/README.md). They define:
+Use the SQL fixture and Genie configuration assets in [lower-code/genie-agents](../../lower-code/genie-agents/README.md). Its renderers put the fixture SQL and Genie configuration in a catalog and schema you choose in the target workspace. They define:
 
-- `northstar_demo.retail.sales`: one sale row, with date, product ID/name, category, region, units, and net revenue in USD.
-- `northstar_demo.retail.inventory`: inventory snapshot by product and warehouse, with on-hand quantity and reorder point.
+- Sales table (default `northstar_demo.retail.sales`): one sale row, with date, product ID/name, category, region, units, and net revenue in USD.
+- Inventory table (default `northstar_demo.retail.inventory`): inventory snapshot by product and warehouse, with on-hand quantity and reorder point.
 - Sales period October 1–3, 2026; inventory snapshot October 3, 2026. SKU-100 Trail Runner, SKU-200 City Pack, SKU-300 Rain Shell.
 
 The fixture's definitions are synthetic demo conventions, not inferred business rules. Read and review the shared setup before executing any SQL or creating Genie resources. Its candidate example SQL has not been executed against a workspace. For production reusable metrics, consider governed metric views and validate all KPI definitions with the data owner.
@@ -36,24 +36,24 @@ The required Genie creation SDK is `WorkspaceClient().genie.create_space(warehou
 From this directory, install dependencies and run:
 
 ```bash
-uv sync
-uv run pytest -q
+uv sync --frozen
+uv run --frozen pytest -q
 ```
 
 These tests inject model responses and SDK clients. They verify both-domain delegation, specialist tool isolation, actual SDK adapter submission and result extraction, session/recovery translation, and generated runtime/UI behavior. They **do not** prove that a live model selects the correct domain or generates correct SQL. Live tests require explicit `RUN_LIVE_TESTS=1`; merely having credentials does not enable them.
 
 ## Prepare live integration later — commands not executed
 
-Install/activate the project first (`uv sync`). The following commands only edit this local manifest; use real existing Genie IDs from the shared example. Commands verified against Agent Bricks CLI **0.6.0**:
+First create and validate the fixture tables and the sales and inventory Genie Agents using the shared lower-code README. Record the two returned space IDs. Install the project (`uv sync --frozen`). The following commands edit this local manifest; they replace its deliberately invalid sample IDs. Commands verified against Agent Bricks CLI **0.6.0**:
 
 ```bash
 export SALES_GENIE_SPACE_ID='<32-character-lowercase-hex-id>'
 export INVENTORY_GENIE_SPACE_ID='<32-character-lowercase-hex-id>'
 
-uv run agentbricks tools remove sales
-uv run agentbricks tools remove inventory
-uv run agentbricks tools add genie-agent "$SALES_GENIE_SPACE_ID" --name sales --auth app
-uv run agentbricks tools add genie-agent "$INVENTORY_GENIE_SPACE_ID" --name inventory --auth app
+uv run --frozen agentbricks tools remove sales
+uv run --frozen agentbricks tools remove inventory
+uv run --frozen agentbricks tools add genie-agent "$SALES_GENIE_SPACE_ID" --name sales --auth app
+uv run --frozen agentbricks tools add genie-agent "$INVENTORY_GENIE_SPACE_ID" --name inventory --auth app
 ```
 
 Names `sales` and `inventory` are integration contracts: the specialist code selects each corresponding ask/poll/query_result triple. Use **`genie-agent`**, not `genie` or `genie-one`; Genie One is the different cross-workspace data discovery offering.
@@ -64,11 +64,20 @@ For an explicitly authorized live local run later:
 
 ```bash
 cp .env.example .env
-# Edit DATABRICKS_CONFIG_PROFILE in .env first.
-uv run agentbricks --profile '<profile>' dev --app-port 8002
+# Replace YOUR_PROFILE in .env with the target workspace profile.
+uv run --frozen agentbricks --profile '<profile>' dev --app-port 8002
 ```
 
-`dev` hosts locally but model and Genie calls still reach Databricks. CLI 0.6.0 uses local invocation state, process-local conversation checkpoints and local tracing; bound managed stores are not provisioned or used by `dev`. To use **existing** managed stores locally instead, supply `AGENT_SESSION_STORE` and `AGENT_MEMORY_STORE` through `.env` and run `uv run start-server` directly. No deployment command is part of this walkthrough.
+`dev` hosts locally but model and Genie calls still reach Databricks. CLI 0.6.0 uses local invocation state, process-local conversation checkpoints and local tracing; bound managed stores are not provisioned or used by `dev`. To use **existing** managed stores locally instead, supply `AGENT_SESSION_STORE` and `AGENT_MEMORY_STORE` through `.env` and run `uv run --frozen start-server` directly.
+
+After local verification, choose a unique App name and review the Session Store, Memory Store, and tracing names in `agent.toml` for the target workspace. To deploy the bound agent:
+
+```bash
+uv run --frozen agentbricks --profile '<profile>' deploy '<app-name>' --source .
+databricks apps get '<app-name>' --profile '<profile>'
+```
+
+The deploy command provisions or binds resources declared in the manifest and creates or updates a Databricks App. The runtime identity needs the Genie, warehouse, and UC permissions described above. Deployment and live validation have not been performed for this sample.
 
 The default gateway model is `system.ai.claude-sonnet-4-5`, inherited from the installed template. Access to that model has not been validated; choose an available tool-capable gateway model through the UI or `input.model`. [Agent Bricks CLI](https://docs.databricks.com/aws/en/agents/custom-agents/agent-bricks-cli).
 
@@ -103,7 +112,7 @@ For live acceptance, inspect trace/tool events for both `sales_specialist` and `
 | Attach optional direct memory tools | CLI `memory bind <store>` plus existing actor-scoped `memory_tools(actor)` wiring |
 | Runtime protocol and recovery | Generated `runtime/adapter.py` and `runtime/main.py`; retained rather than replaced |
 
-The store names in the manifest are declarations for later deployment. This sample focuses on orchestration; [sample 01](../01-hello-memory/README.md) owns the full memory pipeline walkthrough. LangGraph serialized checkpoints are not pipeline-readable conversations: automatic extraction needs an additional readable transcript in the Session Store. No memory pipeline is declared or implied here. [Session and memory tutorial](https://docs.databricks.com/aws/en/agents/agent-memory/existing-agent-tutorial).
+The store names in the manifest are declarations for later deployment. This sample focuses on orchestration. LangGraph serialized checkpoints are not pipeline-readable conversations: automatic extraction needs an additional readable transcript in the Session Store. No memory pipeline is declared or implied here. [Session and memory tutorial](https://docs.databricks.com/aws/en/agents/agent-memory/existing-agent-tutorial).
 
 ## Execution limits and recovery
 
@@ -113,4 +122,4 @@ The supervisor has a bounded LangGraph recursion limit (25 by default); speciali
 
 Verified October 20, 2026 against installed `databricks-agentbricks==0.6.0`, `databricks-langchain==0.21.0`, their `genie_tools`/`GenieAgent` source, generated `AGENTKIT_CONTRACT.md`, SDK method signatures and the linked official documentation. No live model, SQL warehouse, Genie resource, store permission or recovery behavior has been validated in a workspace.
 
-Dependency resolution uses pinned Agent Bricks 0.6.0, databricks-langchain 0.21.0 and SDK 0.154.0. A complete `uv.lock` is included. Tests were rerun successfully in this sample's separately synced environment using `uv run --offline --locked pytest -q`.
+Dependency resolution uses pinned Agent Bricks 0.6.0, databricks-langchain 0.21.0 and SDK 0.154.0. A complete `uv.lock` is included. Offline tests pass in this sample's separately synced environment using `uv run --frozen --offline pytest -q`.

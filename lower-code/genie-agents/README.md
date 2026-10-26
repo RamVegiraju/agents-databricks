@@ -21,8 +21,9 @@ This fictional example defines net revenue as the supplied USD amount after disc
 - [sales configuration](assets/sales.serialized-space.json) and [inventory configuration](assets/inventory.serialized-space.json): unescaped version 2 serialized-space objects.
 - [combined retail configuration](assets/retail.serialized-space.json): two tables and three CTE examples that aggregate sales and stock at compatible grains before joining. No raw fact-to-fact join is registered: joining sale lines directly to warehouse snapshots multiplies totals. Each example explicitly scopes the sales period and one inventory snapshot date.
 - [render_request.py](render_request.py): local-only renderer that wraps the selected configuration in a create request, optionally remapping catalog/schema. It makes no network calls.
+- [render_sql.py](render_sql.py): local-only renderer for fixture and validation SQL in the same catalog/schema.
 
-Use a dedicated empty demo schema: `IF NOT EXISTS` does not verify an existing table's schema, and fixture merges do not remove unrelated rows. Changing catalog/schema in the renderer does not change the SQL file; edit that file consistently before executing it.
+Use a dedicated empty demo schema: `IF NOT EXISTS` does not verify an existing table's schema, and fixture merges do not remove unrelated rows. The catalog must already exist. Pass the same catalog and schema to both renderers and to the other samples' setup commands.
 
 For a real rollout, confirm business definitions, inspect data, and consider governed metric views before curating Genie. These compact raw-table fixtures also demonstrate sale-line and warehouse-level detail. No trusted/certified SQL label or benchmark claims are made. SQL examples were checked locally on synthetic rows, not on a Databricks warehouse. Add warehouse-tested benchmarks and additional examples before production use. [Curation guidance](https://docs.databricks.com/aws/en/genie-agents/conversation-api#create-or-select-a-genie-agent)
 
@@ -35,15 +36,17 @@ After separately reviewing and setting up the fixture tables, open **Genie Agent
 From this directory:
 
 ```bash
-uv sync --group dev
-uv run pytest
-uv run python render_request.py sales --warehouse-id '<warehouse-id>' > /tmp/northstar-sales-create.json
-uv run python render_request.py inventory --warehouse-id '<warehouse-id>' > /tmp/northstar-inventory-create.json
+uv sync --frozen --group dev
+uv run --frozen pytest
+uv run --frozen python render_sql.py fixtures --catalog '<catalog>' --schema '<schema>' > /tmp/northstar-fixtures.sql
+uv run --frozen python render_sql.py validate --catalog '<catalog>' --schema '<schema>' > /tmp/northstar-validate.sql
+uv run --frozen python render_request.py sales --catalog '<catalog>' --schema '<schema>' --warehouse-id '<warehouse-id>' > /tmp/northstar-sales-create.json
+uv run --frozen python render_request.py inventory --catalog '<catalog>' --schema '<schema>' --warehouse-id '<warehouse-id>' > /tmp/northstar-inventory-create.json
 # Alternative tabular agent for sample 03:
-uv run python render_request.py retail --warehouse-id '<warehouse-id>' > /tmp/northstar-retail-create.json
+uv run --frozen python render_request.py retail --catalog '<catalog>' --schema '<schema>' --warehouse-id '<warehouse-id>' > /tmp/northstar-retail-create.json
 ```
 
-The rendering commands only write local JSON. The `serialized_space` request property is a JSON **string**, while the checked-in asset is a JSON **object**; the renderer handles encoding. The tests verify serialization rules, namespace remapping, and run all nine example SELECTs against the actual fixture VALUES in SQLite. Combined queries are also checked with an extra inventory snapshot to catch date leakage and inflated sales. SQLite validates this portable query subset, not Delta DDL or Genie service acceptance.
+The rendering commands only write local SQL and JSON files. The `serialized_space` request property is a JSON **string**, while the checked-in asset is a JSON **object**; the renderer handles encoding. The tests verify serialization rules, namespace remapping, and run all nine example SELECTs against the actual fixture VALUES in SQLite. Combined queries are also checked with an extra inventory snapshot to catch date leakage and inflated sales. SQLite validates this portable query subset, not Delta DDL or Genie service acceptance.
 
 Version 2, lowercase 32-hex IDs, string arrays, sorting, and column settings were checked against the current [serialized-space rules](https://docs.databricks.com/aws/en/genie-agents/conversation-api#validation-rules-for-serialized_space) on October 20, 2026. Some older examples earlier on that same page still use version 1; the explicit validation section says to use 2 for new agents. SDK 0.154.0 takes `serialized_space: str` and does not validate its internals. Actual service validation remains unperformed.
 
@@ -51,7 +54,7 @@ Version 2, lowercase 32-hex IDs, string arrays, sorting, and column settings wer
 
 All commands below contact a workspace. Replace placeholders and review the rendered payload first. CLI syntax was inspected locally with Databricks CLI 1.17.0 `--help`.
 
-**Provisioning:** execute the reviewed `fixtures.sql` in the SQL editor using an existing warehouse. Then these commands create persistent Genie Agent objects; running them again creates additional agents.
+**Provisioning:** execute the reviewed `/tmp/northstar-fixtures.sql` in the SQL editor using the chosen warehouse. Run `/tmp/northstar-validate.sql` to inspect the fixture results. Then these commands create persistent Genie Agent objects; running them again creates additional agents.
 
 ```bash
 databricks genie create-space --json @/tmp/northstar-sales-create.json --profile '<profile>' --output json

@@ -3,6 +3,8 @@
 Verified locally on October 20, 2026. This is a source/docs and offline behavior record, not a
 workspace acceptance report. No Databricks resource creation, deployment, remote model call,
 Genie query, pipeline run or external MCP call was performed for this build.
+The original sample 01 was later replaced by the Agent Bricks CLI quickstart; its results below
+describe the earlier memory-focused version.
 
 ## Versions and reproducibility
 
@@ -35,8 +37,8 @@ runtime/tests after formatting/import cleanup. The introductory app preserves ge
 HTTP payload semantics through its explicit TRY004 lint exception. Each pro-code suite reports an
 upstream Unity Catalog toolkit Pydantic deprecation warning; it does not fail the tests.
 
-The scripts/validate.sh runner forces live tests off and performs the same locked offline checks.
-It requires uv plus each project's previously installed environment/cache.
+The current `scripts/validate.sh` runner forces live tests off and uses frozen locks. It may
+download dependencies on a fresh checkout; the dated results above used previously synced environments.
 
 ## Evidence and boundaries
 
