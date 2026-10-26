@@ -24,7 +24,8 @@ uv run --locked python run_comparison.py \
 ```
 
 Find both deployments under **Compute → Apps**. The comparison CLI waits for one and three active,
-running instances before testing, shows Locust statistics in the terminal, and saves HTML/CSV and
+running instances, checks routing and completes a preflight invocation for each App, then shows live
+Locust statistics in the terminal during each timed stage. It saves HTML/CSV and
 `index.html` under `scripts/loadtest/results/comparison-<timestamp>/`. Both Apps remain deployed at
 their fixed counts afterward. See the [walkthrough](HORIZONTAL_SCALING.md) for architecture and
 benchmark details.

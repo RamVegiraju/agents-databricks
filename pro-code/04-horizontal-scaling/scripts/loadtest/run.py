@@ -67,12 +67,14 @@ def preflight(url: str, token: str, prompt: str, timeout: int) -> None:
 
 def probe_replicas(url: str, token: str, keys: int, timeout: int) -> dict[str, int]:
     replicas: Counter[str] = Counter()
-    for _ in range(keys):
+    for index in range(keys):
         result = request_json(f"{url}/api/replica", token, str(uuid4()), None, timeout)
         replica_id = result.get("replica_id")
         if not isinstance(replica_id, str) or not replica_id:
             raise RuntimeError("/api/replica did not return a replica_id")
         replicas[replica_id] += 1
+        if (index + 1) % 10 == 0 or index + 1 == keys:
+            print(f"Routing probes: {index + 1}/{keys}", flush=True)
     return dict(replicas)
 
 
@@ -83,14 +85,18 @@ def read_stats(path: Path) -> dict:
 def run(args: argparse.Namespace) -> dict:
     url = args.app_url.rstrip("/")
     token = token_for(args.profile)
+    print(f"Checking routing across {args.probe_keys} requests...", flush=True)
     replicas = probe_replicas(url, token, args.probe_keys, args.timeout)
+    print(f"Observed {len(replicas)} server process(es).", flush=True)
     expected = getattr(args, "expected_replicas", None)
     if expected is not None and len(replicas) != expected:
         raise RuntimeError(
             f"Expected {expected} server processes, observed {len(replicas)}; "
             "check App status or increase --probe-keys"
         )
+    print("Running a preflight agent invocation...", flush=True)
     preflight(url, token, args.prompt, args.timeout)
+    print("Preflight completed.", flush=True)
     args.output_dir.mkdir(parents=True, exist_ok=True)
     environment = os.environ.copy()
     environment.update(
@@ -129,9 +135,23 @@ def run(args: argparse.Namespace) -> dict:
         ]
         if not getattr(args, "live_stats", False):
             command.append("--only-summary")
-        print(f"Running {users} Locust users for {args.duration_seconds}s", flush=True)
+        print(
+            f"Running {users} Locust users for {args.duration_seconds}s"
+            + (
+                " (live statistics follow)"
+                if getattr(args, "live_stats", False)
+                else ""
+            ),
+            flush=True,
+        )
         completed = subprocess.run(command, env=environment, check=False)
         stats = read_stats(stage / "final-summary.json")
+        print(
+            f"Finished {users} users: {stats['requests_per_second']:.2f} req/s, "
+            f"p95 {stats['latency_ms_p95']} ms, "
+            f"{stats['completed']} completed, {stats['failures']} failed.",
+            flush=True,
+        )
         levels.append(
             {
                 "users": users,
