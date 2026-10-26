@@ -26,7 +26,6 @@ agentbricks --profile <profile> deploy <name> --source .
 | MCP servers | `agent/mcps.py` |
 | Managed runtime `invoke`/`recover` hooks and input/output translation | `runtime/adapter.py` |
 | `DurableAgentServer` construction and hook registration | `runtime/main.py` |
-| Replica diagnostic route | `runtime/scaling.py` |
 | Browser and managed-state routes | `runtime/ui.py` |
 | Browser behavior | `ui/app.js` |
 

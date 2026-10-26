@@ -99,7 +99,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--users", default="1,4,8,16")
     parser.add_argument("--duration-seconds", type=int, default=30)
     parser.add_argument("--timeout", type=int, default=120)
-    parser.add_argument("--probe-keys", type=int, default=60)
     parser.add_argument("--ready-wait-seconds", type=int, default=600)
     parser.add_argument(
         "--prompt", default="Reply with exactly one short sentence saying hello."
@@ -124,14 +123,11 @@ def parse_args() -> argparse.Namespace:
         or min(
             args.duration_seconds,
             args.timeout,
-            args.probe_keys,
             args.ready_wait_seconds,
         )
         < 1
     ):
-        parser.error(
-            "users must be distinct and positive; timeouts and probe count must be positive"
-        )
+        parser.error("users must be distinct and positive; timeouts must be positive")
     if args.output_dir is None:
         stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%SZ")
         args.output_dir = Path("results") / f"comparison-{stamp}"
@@ -169,11 +165,9 @@ def main() -> None:
                 users=args.users,
                 duration_seconds=args.duration_seconds,
                 timeout=args.timeout,
-                probe_keys=args.probe_keys,
                 prompt=args.prompt,
                 output_dir=args.output_dir / label,
                 live_stats=not args.quiet_locust,
-                expected_replicas=count,
             )
         )
         summary.update(

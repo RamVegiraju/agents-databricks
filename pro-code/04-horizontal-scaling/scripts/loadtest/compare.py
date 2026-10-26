@@ -24,6 +24,11 @@ def seconds(milliseconds: float | None) -> str:
     return f"{milliseconds / 1000:.1f}s" if milliseconds is not None else "n/a"
 
 
+def instance_count(summary: dict) -> int | None:
+    """Keep archived summaries with routing probes readable."""
+    return summary.get("configured_instances", summary.get("replica_count_observed"))
+
+
 def terminal_report(baseline: dict, scaled: dict) -> str:
     """Summarize the completed two-App test directly in the terminal."""
     one = {row["users"]: row for row in baseline["levels"]}
@@ -38,8 +43,7 @@ def terminal_report(baseline: dict, scaled: dict) -> str:
         f"{scaled.get('app_name', 'three instances')} (3)",
         f"Compute: {baseline.get('compute_size', 'unknown')}  |  "
         f"Duration: {baseline['duration_seconds_per_level']}s per user level per App",
-        f"Routing verified: {baseline['replica_count_observed']} -> "
-        f"{scaled['replica_count_observed']} server processes",
+        f"Ready App instances: {instance_count(baseline)} -> {instance_count(scaled)}",
         "Apps were tested sequentially at fixed instance counts.",
         "",
         f"{'Users':>5}  {'1 inst req/s':>12}  {'3 inst req/s':>12}  {'Gain':>6}  "
@@ -100,7 +104,7 @@ def compare(baseline: dict, scaled: dict) -> str:
     lines = [
         f"One-instance App: {baseline['app_url']}",
         f"Three-instance App: {scaled['app_url']}",
-        f"Observed replicas: {baseline['replica_count_observed']} → {scaled['replica_count_observed']}",
+        f"App instances: {instance_count(baseline)} → {instance_count(scaled)}",
         "",
         "| Users | Baseline full-run req/s | Scaled full-run req/s | Gain | Baseline p95 ms | Scaled p95 ms | Failures (base / scaled) |",
         "| ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
@@ -119,13 +123,6 @@ def compare(baseline: dict, scaled: dict) -> str:
             [
                 "",
                 "Runs stopped at different user levels; missing stages are shown as n/a.",
-            ]
-        )
-    if baseline["replica_count_observed"] != 1 or scaled["replica_count_observed"] < 3:
-        lines.extend(
-            [
-                "",
-                "Replica probe did not confirm a one-to-three change. Check Apps compute status.",
             ]
         )
     return "\n".join(lines)

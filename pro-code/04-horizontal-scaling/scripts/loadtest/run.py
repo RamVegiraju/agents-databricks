@@ -5,7 +5,6 @@ import json
 import os
 import subprocess
 import sys
-from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.request import Request, urlopen
@@ -28,17 +27,17 @@ def token_for(profile: str) -> str:
 
 
 def request_json(
-    url: str, token: str, routing_key: str, body: dict | None, timeout: int
+    url: str, token: str, routing_key: str, body: dict, timeout: int
 ) -> dict:
     request = Request(
         url,
-        data=json.dumps(body).encode() if body is not None else None,
+        data=json.dumps(body).encode(),
         headers={
             "Authorization": f"Bearer {token}",
             "X-Routing-Key": routing_key,
             "Content-Type": "application/json",
         },
-        method="POST" if body is not None else "GET",
+        method="POST",
     )
     with urlopen(request, timeout=timeout) as response:
         return json.load(response)
@@ -65,19 +64,6 @@ def preflight(url: str, token: str, prompt: str, timeout: int) -> None:
         raise RuntimeError("Preflight invocation did not complete")
 
 
-def probe_replicas(url: str, token: str, keys: int, timeout: int) -> dict[str, int]:
-    replicas: Counter[str] = Counter()
-    for index in range(keys):
-        result = request_json(f"{url}/api/replica", token, str(uuid4()), None, timeout)
-        replica_id = result.get("replica_id")
-        if not isinstance(replica_id, str) or not replica_id:
-            raise RuntimeError("/api/replica did not return a replica_id")
-        replicas[replica_id] += 1
-        if (index + 1) % 10 == 0 or index + 1 == keys:
-            print(f"Routing probes: {index + 1}/{keys}", flush=True)
-    return dict(replicas)
-
-
 def read_stats(path: Path) -> dict:
     return json.loads(path.read_text())
 
@@ -85,15 +71,6 @@ def read_stats(path: Path) -> dict:
 def run(args: argparse.Namespace) -> dict:
     url = args.app_url.rstrip("/")
     token = token_for(args.profile)
-    print(f"Checking routing across {args.probe_keys} requests...", flush=True)
-    replicas = probe_replicas(url, token, args.probe_keys, args.timeout)
-    print(f"Observed {len(replicas)} server process(es).", flush=True)
-    expected = getattr(args, "expected_replicas", None)
-    if expected is not None and len(replicas) != expected:
-        raise RuntimeError(
-            f"Expected {expected} server processes, observed {len(replicas)}; "
-            "check App status or increase --probe-keys"
-        )
     print("Running a preflight agent invocation...", flush=True)
     preflight(url, token, args.prompt, args.timeout)
     print("Preflight completed.", flush=True)
@@ -170,8 +147,6 @@ def run(args: argparse.Namespace) -> dict:
         "profile": args.profile,
         "prompt": args.prompt,
         "duration_seconds_per_level": args.duration_seconds,
-        "replica_count_observed": len(replicas),
-        "replica_request_counts": replicas,
         "levels": levels,
     }
     (args.output_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
@@ -188,7 +163,6 @@ def main() -> None:
     )
     parser.add_argument("--duration-seconds", type=int, default=30)
     parser.add_argument("--timeout", type=int, default=120)
-    parser.add_argument("--probe-keys", type=int, default=60)
     parser.add_argument(
         "--live-stats", action="store_true", help="Show Locust's live CLI statistics"
     )
@@ -207,10 +181,9 @@ def main() -> None:
         or len(set(args.users)) != len(args.users)
         or args.duration_seconds < 1
         or args.timeout < 1
-        or args.probe_keys < 1
     ):
         parser.error(
-            "users must be distinct and positive; duration, timeout, and probe-keys must be positive"
+            "users must be distinct and positive; duration and timeout must be positive"
         )
     summary = run(args)
     print(json.dumps(summary, indent=2))

@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 
 from agent.agent import configure
 from runtime.adapter import invoke, recover
-from runtime.scaling import install_replica_route
 from runtime.ui import install_ui
 
 # override=False so injected DATABRICKS_* (from `agentbricks dev -p` or the deploy platform) win over a
@@ -21,7 +20,6 @@ app = DurableAgentServer()
 app.invoke(invoke)
 app.recover(recover)
 install_ui(app)
-install_replica_route(app)
 
 
 def main() -> None:

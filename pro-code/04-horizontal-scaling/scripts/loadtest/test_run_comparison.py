@@ -28,7 +28,7 @@ def summary(url: str, count: int, rate: float) -> dict:
         "profile": "example-profile",
         "prompt": "hello",
         "duration_seconds_per_level": 10,
-        "replica_count_observed": count,
+        "configured_instances": count,
         "compute_size": "MEDIUM",
         "levels": [
             {
@@ -70,7 +70,6 @@ class ComparisonCliTests(unittest.TestCase):
                 users=[4],
                 duration_seconds=10,
                 timeout=30,
-                probe_keys=10,
                 ready_wait_seconds=30,
                 prompt="hello",
                 output_dir=Path(directory) / "comparison",
@@ -86,8 +85,9 @@ class ComparisonCliTests(unittest.TestCase):
 
             def load(arguments):
                 events.append(f"load-{arguments.label}")
-                rate = 1.0 if arguments.expected_replicas == 1 else 2.0
-                return summary(arguments.app_url, arguments.expected_replicas, rate)
+                count = 1 if arguments.label == "one-instance" else 3
+                rate = 1.0 if count == 1 else 2.0
+                return summary(arguments.app_url, count, rate)
 
             with (
                 patch.object(run_comparison, "parse_args", return_value=args),
@@ -105,6 +105,9 @@ class ComparisonCliTests(unittest.TestCase):
                 ],
             )
             self.assertIn("2.00×", (args.output_dir / "comparison.md").read_text())
+            self.assertIn(
+                "App instances: 1 → 3", (args.output_dir / "comparison.md").read_text()
+            )
             self.assertIn(
                 "three-instances/users-4/locust.html",
                 (args.output_dir / "index.html").read_text(),

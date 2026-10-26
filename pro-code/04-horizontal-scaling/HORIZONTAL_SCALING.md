@@ -14,8 +14,8 @@ Locust → App URL → Apps router → instance → Uvicorn → DurableAgentServ
                                                    ↘ Runtime Store / Session Store
 ```
 
-Each instance runs one Uvicorn worker by default. `/api/replica` identifies the server process;
-the CLI probes it with distinct `X-Routing-Key` values and requires one or three process IDs.
+Each instance runs one Uvicorn worker by default. Before testing, the CLI checks that Apps reports
+one and three configured, active, and running instances.
 For every invocation, Locust sends a fresh invocation ID and session ID. The session ID also serves
 as that request's routing key, so independent requests can reach different processes. Sticky
 routing is best effort. The managed Session Store preserves graph checkpoints across replicas;

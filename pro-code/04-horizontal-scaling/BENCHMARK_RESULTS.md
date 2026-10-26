@@ -8,6 +8,7 @@ Session Store and Memory Store, and Locust runner. Each App had its own URL and 
 Before load, Apps reported the matching configured, active, and running counts; 60 distinct routing
 keys reached one and three server processes respectively. Locust then tested each ready App in
 sequence for 30 seconds per user level, with graceful drain and fresh IDs per invocation.
+The current demo CLI uses the Apps status checks and skips those historical routing probes.
 
 | Concurrent users | 1 instance req/s | 3 instances req/s | Gain | p95 latency, 1 → 3 | Failures |
 | ---: | ---: | ---: | ---: | ---: | ---: |
