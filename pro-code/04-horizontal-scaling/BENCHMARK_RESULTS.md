@@ -27,7 +27,7 @@ and [three instances](benchmark-results/2026-10-26/three-instances-controlled.js
 
 ## Prior same-App benchmark, 2026-10-23
 
-The run used a staging workspace and Medium App compute. The same deployed source, App URL, Runtime
+The run used Medium App compute. The same deployed source, App URL, Runtime
 Store, Session Store, prompt, and Locust runner were used within each one-versus-three pair.
 Scaling was a manual Apps update with `compute_min_instances` and `compute_max_instances` both set
 to 1 or both set to 3. App status reported the matching number of active and running instances;
@@ -71,7 +71,7 @@ HTML/CSV reports are not committed. Reproduce the table from the checked-in aggr
 
 ```bash
 cd scripts/loadtest
-uv run --locked python compare.py \
+uv run --frozen python compare.py \
   ../../benchmark-results/2026-10-23/one-instance-controlled.json \
   ../../benchmark-results/2026-10-23/three-instances-controlled.json
 ```
@@ -91,6 +91,5 @@ from other workspace traffic. The saved aggregates are
 [one instance](benchmark-results/2026-10-23/one-instance-real.json) and
 [three instances](benchmark-results/2026-10-23/three-instances-real.json).
 
-No change to `DurableAgentServer` was required. The sample adds only a process diagnostic route
-and the optional benchmark model. After testing, the benchmark environment variables are removed
-from the deployed App and its instance count is returned to one.
+No change to `DurableAgentServer` was required. The current two-App sample uses the optional
+benchmark model and checks instance counts through Apps status; it has no process diagnostic route.
