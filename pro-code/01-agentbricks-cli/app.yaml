@@ -1,1 +1,1 @@
-command: ["uv", "run", "--frozen", "start-server"]
+command: ["uv", "run", "start-server"]

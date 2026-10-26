@@ -1,6 +1,6 @@
 # Northstar retail: two curated Genie Agents
 
-This is the lower-code counterpart to the pro-code LangGraph examples. A retail analyst uses one Genie Agent for sales and another for inventory, or a combined retail agent for the full-stack example. Each configuration includes column descriptions, entity matching for categorical dimensions, three sample questions, and three representative SQL examples. These are reviewable draft assets; nothing here has been provisioned or queried in a workspace.
+This is the lower-code counterpart to the pro-code LangGraph examples. A retail analyst uses one Genie Agent for sales and another for inventory, or a combined retail agent for the full-stack example. Each configuration includes column descriptions, entity matching for categorical dimensions, three sample questions, and three representative SQL examples. These are portable assets; rendering and local tests create no workspace resources.
 
 | Agent | Data | Example |
 |---|---|---|
@@ -48,11 +48,11 @@ uv run --frozen python render_request.py retail --catalog '<catalog>' --schema '
 
 The rendering commands only write local SQL and JSON files. The `serialized_space` request property is a JSON **string**, while the checked-in asset is a JSON **object**; the renderer handles encoding. The tests verify serialization rules, namespace remapping, and run all nine example SELECTs against the actual fixture VALUES in SQLite. Combined queries are also checked with an extra inventory snapshot to catch date leakage and inflated sales. SQLite validates this portable query subset, not Delta DDL or Genie service acceptance.
 
-Version 2, lowercase 32-hex IDs, string arrays, sorting, and column settings were checked against the current [serialized-space rules](https://docs.databricks.com/aws/en/genie-agents/conversation-api#validation-rules-for-serialized_space) on October 20, 2026. Some older examples earlier on that same page still use version 1; the explicit validation section says to use 2 for new agents. SDK 0.154.0 takes `serialized_space: str` and does not validate its internals. Actual service validation remains unperformed.
+Version 2, lowercase 32-hex IDs, string arrays, sorting, and column settings were checked against the current [serialized-space rules](https://docs.databricks.com/aws/en/genie-agents/conversation-api#validation-rules-for-serialized_space) on October 20, 2026. Some older examples earlier on that same page still use version 1; the explicit validation section says to use 2 for new agents. SDK 0.154.0 takes `serialized_space: str` and does not validate its internals. Validate service acceptance in each target workspace.
 
-## Opt-in CLI lifecycle — not executed
+## CLI lifecycle
 
-All commands below contact a workspace. Replace placeholders and review the rendered payload first. CLI syntax was inspected locally with Databricks CLI 1.17.0 `--help`.
+All commands below contact a workspace. Replace placeholders and review the rendered payload first. CLI syntax was inspected locally with Databricks CLI 1.20.0 `--help`.
 
 **Provisioning:** execute the reviewed `/tmp/northstar-fixtures.sql` in the SQL editor using the chosen warehouse. Run `/tmp/northstar-validate.sql` to inspect the fixture results. Then these commands create persistent Genie Agent objects; running them again creates additional agents.
 
@@ -83,7 +83,7 @@ databricks genie create-message '<sales-space-id>' '<conversation-id>' 'Break th
 
 Poll until a terminal status (`COMPLETED`, `FAILED`, or `CANCELLED`). Inspect generated SQL, text, errors, and query attachment IDs. Fetch result rows with `databricks genie get-message-attachment-query-result SPACE_ID CONVERSATION_ID MESSAGE_ID ATTACHMENT_ID`. A follow-up must reuse its Genie conversation ID; an unrelated question starts a new conversation. [Conversation API](https://docs.databricks.com/aws/en/genie-agents/conversation-api)
 
-## SDK equivalent — not executed
+## SDK equivalent
 
 This is an alternative to CLI creation, not a second setup step. Run from this directory after configuring authentication and reviewing the request. The create call provisions an agent; the query call starts a conversation and may execute warehouse SQL.
 
@@ -102,7 +102,7 @@ message = w.genie.start_conversation_and_wait(
 print(json.dumps(message.as_dict(), indent=2))
 ```
 
-Use `w.genie.get_space(space_id, include_serialized_space=True)` to export and `w.genie.update_space(space_id, serialized_space=...)` to change an existing agent rather than creating duplicates. Code-managed curation controls the same resource as the UI. The SDK signatures above were inspected in SDK 0.154.0; neither SDK nor CLI commands were executed against a workspace.
+Use `w.genie.get_space(space_id, include_serialized_space=True)` to export and `w.genie.update_space(space_id, serialized_space=...)` to change an existing agent rather than creating duplicates. Code-managed curation controls the same resource as the UI. The SDK signatures above were inspected in SDK 0.154.0.
 
 ## Permissions, costs, and integration boundaries
 

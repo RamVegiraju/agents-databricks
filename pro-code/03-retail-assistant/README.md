@@ -28,7 +28,7 @@ flowchart TD
 Nothing in application startup creates external resources. The active manifest
 has no invented Genie ID or external service binding. Setup scripts default to
 **offline preview**; `--apply` and a chosen profile are required to mutate a
-workspace. No deployment or live resource setup has been performed.
+workspace.
 
 ## Code map
 
@@ -62,12 +62,11 @@ Tests inject clients and model/tool outcomes; they do not verify live Genie,
 embeddings, GitHub credentials or permissions. Live model testing is disabled
 unless `RUN_LIVE_TESTS=1` is explicitly set. Keep it unset during offline review.
 
-## Resource setup for a later authorized run
+## Resource setup in a target workspace
 
-These instructions have **not** been executed. Choose your profile and UC names
-before applying. Prerequisites: existing catalog/schema, SQL warehouse, supported
-AI Search region and available embedding model. Scripts never auto-select a
-workspace or warehouse.
+Choose your profile and UC names before applying. Prerequisites: existing
+catalog/schema, SQL warehouse, supported AI Search region and available
+embedding model. Scripts never auto-select a workspace or warehouse.
 
 ### 1. Tabular data and curated Genie
 
@@ -208,7 +207,7 @@ uv run --frozen agentbricks --profile YOUR_PROFILE dev
 `http://localhost:8000`. **Model and configured tool calls are live**. In installed
 0.6.0, default `dev` keeps tracing in a local SQLite-backed MLflow server, memory
 off and session history in process; it does not provision the declared managed
-stores. `dev` was not run for this change.
+stores.
 
 After local verification, review the Session Store, Memory Store, and tracing
 names in `agent.toml` for the target workspace. Add the index name to `app.yaml`
@@ -221,14 +220,24 @@ env:
     value: YOUR_CATALOG.YOUR_SCHEMA.policy_index
 ```
 
-Choose a unique App name and deploy:
+Choose a unique agent name and deploy. The CLI prefixes the resulting App name
+with `agent-bricks-`:
 
 ```bash
-uv run --frozen agentbricks --profile YOUR_PROFILE deploy YOUR_APP_NAME --source .
-databricks apps get YOUR_APP_NAME --profile YOUR_PROFILE
+uv run --frozen agentbricks --profile YOUR_PROFILE deploy YOUR_AGENT_NAME --source .
+databricks apps get agent-bricks-YOUR_AGENT_NAME --profile YOUR_PROFILE
 ```
 
-Deployment and live validation have not been performed for this sample.
+Attach the policy index and both Genie source tables to the App service
+principal. This preserves the Genie and tracing resources that deployment added:
+
+```bash
+uv run --frozen python -m scripts.grant_app_access --profile YOUR_PROFILE --app agent-bricks-YOUR_AGENT_NAME --schema YOUR_CATALOG.YOUR_SCHEMA
+uv run --frozen python -m scripts.grant_app_access --profile YOUR_PROFILE --app agent-bricks-YOUR_AGENT_NAME --schema YOUR_CATALOG.YOUR_SCHEMA --apply
+```
+
+The command expects `sales`, `inventory`, and `policy_index` in that schema. Run
+it again after redeployment if the App's resource list changes.
 
 Example prompts and evidence to inspect:
 
@@ -240,6 +249,9 @@ Example prompts and evidence to inspect:
 - “Use GitHub MCP to read README.md from owner/repository and explain how its
   ingestion supports our retail policy pipeline.” → governed `get_file_contents`
   call; substitute a real authorized repository.
+
+GitHub MCP has not been validated in a live workspace. It requires a configured
+GitHub credential before running that prompt.
 
 Inspect browser tool events and MLflow traces. A plausible answer, binding or
 mocked test does not establish live integration success. Managed sessions and
@@ -263,6 +275,6 @@ Official references:
 - [GitHub remote MCP](https://github.com/github/github-mcp-server/blob/main/docs/remote-server.md)
 
 Workspace availability, auth, permissions, embeddings, tool discovery, SQL,
-index readiness and end-to-end calls remain unvalidated pending an authorized
-live run. [AGENTKIT_CONTRACT.md](AGENTKIT_CONTRACT.md) and
+index readiness and end-to-end calls must be validated in each target workspace.
+[AGENTKIT_CONTRACT.md](AGENTKIT_CONTRACT.md) and
 [CHAT_APP.md](CHAT_APP.md) explain generated runtime/browser contracts.

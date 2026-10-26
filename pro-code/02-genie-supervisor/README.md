@@ -2,7 +2,7 @@
 
 A custom Python supervisor delegates to **two separately curated Genie Agents**: sales and inventory. Ask “Which best-selling products are below their reorder point?” and the supervisor can consult both domains, match `product_id`, and synthesize an evidence-backed recommendation. This is pro-code orchestration, not a managed Agent Bricks Supervisor resource.
 
-No workspace resources have been created and this sample has not been deployed. The two space IDs in `agent.toml` are deliberately nonexistent examples. A binding is configuration, not proof of a successful Genie call.
+The two space IDs in `agent.toml` are deliberately nonexistent examples. Bind Genie Agents created in your workspace before running or deploying. A binding is configuration, not proof of a successful Genie call.
 
 ```mermaid
 flowchart TD
@@ -27,7 +27,7 @@ Use the SQL fixture and Genie configuration assets in [lower-code/genie-agents](
 - Inventory table (default `northstar_demo.retail.inventory`): inventory snapshot by product and warehouse, with on-hand quantity and reorder point.
 - Sales period October 1–3, 2026; inventory snapshot October 3, 2026. SKU-100 Trail Runner, SKU-200 City Pack, SKU-300 Rain Shell.
 
-The fixture's definitions are synthetic demo conventions, not inferred business rules. Read and review the shared setup before executing any SQL or creating Genie resources. Its candidate example SQL has not been executed against a workspace. For production reusable metrics, consider governed metric views and validate all KPI definitions with the data owner.
+The fixture's definitions are synthetic demo conventions, not inferred business rules. Read and review the shared setup before executing any SQL or creating Genie resources. Validate the candidate SQL in your target workspace. For production reusable metrics, consider governed metric views and validate all KPI definitions with the data owner.
 
 The required Genie creation SDK is `WorkspaceClient().genie.create_space(warehouse_id=..., serialized_space=..., title=..., description=..., parent_path=...)`; `serialized_space` is a JSON **string**, not a dict. SDK/CLI resource APIs still call these “spaces.” Creation/configuration belongs to the lower-code example; binding and orchestration belong here. [Genie creation and management](https://docs.databricks.com/aws/en/genie-agents/conversation-api).
 
@@ -42,25 +42,22 @@ uv run --frozen pytest -q
 
 These tests inject model responses and SDK clients. They verify both-domain delegation, specialist tool isolation, actual SDK adapter submission and result extraction, session/recovery translation, and generated runtime/UI behavior. They **do not** prove that a live model selects the correct domain or generates correct SQL. Live tests require explicit `RUN_LIVE_TESTS=1`; merely having credentials does not enable them.
 
-## Prepare live integration later — commands not executed
+## Bind Genie Agents and deploy
 
-First create and validate the fixture tables and the sales and inventory Genie Agents using the shared lower-code README. Record the two returned space IDs. Install the project (`uv sync --frozen`). The following commands edit this local manifest; they replace its deliberately invalid sample IDs. Commands verified against Agent Bricks CLI **0.6.0**:
+First create and validate the fixture tables and the sales and inventory Genie Agents using the shared lower-code README. Record the two returned space IDs. Install the project (`uv sync --frozen`). Bind the IDs into this local manifest:
 
 ```bash
-export SALES_GENIE_SPACE_ID='<32-character-lowercase-hex-id>'
-export INVENTORY_GENIE_SPACE_ID='<32-character-lowercase-hex-id>'
-
-uv run --frozen agentbricks tools remove sales
-uv run --frozen agentbricks tools remove inventory
-uv run --frozen agentbricks tools add genie-agent "$SALES_GENIE_SPACE_ID" --name sales --auth app
-uv run --frozen agentbricks tools add genie-agent "$INVENTORY_GENIE_SPACE_ID" --name inventory --auth app
+uv run --frozen python bind_genie.py \
+  --sales-space-id '<sales-space-id>' \
+  --inventory-space-id '<inventory-space-id>'
+uv run --frozen agentbricks doctor .
 ```
 
-Names `sales` and `inventory` are integration contracts: the specialist code selects each corresponding ask/poll/query_result triple. Use **`genie-agent`**, not `genie` or `genie-one`; Genie One is the different cross-workspace data discovery offering.
+The helper changes only the two `space_id` values and checks that the manifest remains valid TOML. Agent Bricks CLI 0.6.0's `tools add genie-agent` malformed this manifest during live setup, so use the helper for this sample. Names `sales` and `inventory` are integration contracts: the specialist code selects each corresponding ask/poll/query_result triple. Genie One is a different cross-workspace data discovery offering.
 
 `--auth app` deliberately uses application credentials. For a future deployment, the app principal needs access to both Genie Agents, their SQL warehouse, and their underlying UC data. Local calls use the selected developer profile. An `actor` field or a session ID is not a data authorization boundary. The generated request-user client plumbing is retained, but adopting `--auth user` requires a deliberate identity/UI integration review and review of background/recovery limits; it is not validated by this demo. [Genie authentication prerequisites](https://docs.databricks.com/aws/en/genie-agents/conversation-api), [Agent Server authorization and recovery](https://docs.databricks.com/aws/en/agents/deploy/agent-server).
 
-For an explicitly authorized live local run later:
+For a local run:
 
 ```bash
 cp .env.example .env
@@ -74,10 +71,10 @@ After local verification, choose a unique App name and review the Session Store,
 
 ```bash
 uv run --frozen agentbricks --profile '<profile>' deploy '<app-name>' --source .
-databricks apps get '<app-name>' --profile '<profile>'
+databricks apps get 'agent-bricks-<app-name>' --profile '<profile>'
 ```
 
-The deploy command provisions or binds resources declared in the manifest and creates or updates a Databricks App. The runtime identity needs the Genie, warehouse, and UC permissions described above. Deployment and live validation have not been performed for this sample.
+The deploy command provisions or binds resources declared in the manifest and creates or updates a Databricks App with the `agent-bricks-` prefix. Keep `<app-name>` to 17 characters so the full App name fits the 30-character limit. Deployment reconciles Genie Agent grants, but it does **not** grant Unity Catalog data access. Read the App's `service_principal_client_id` from `databricks apps get`; grant that principal `USE CATALOG` on your catalog, `USE SCHEMA` on your demo schema, and `SELECT` on the two fixture tables. Verify the deployed response and trace; App readiness alone does not prove that Genie calls worked.
 
 The default gateway model is `system.ai.claude-sonnet-4-5`, inherited from the installed template. Access to that model has not been validated; choose an available tool-capable gateway model through the UI or `input.model`. [Agent Bricks CLI](https://docs.databricks.com/aws/en/agents/custom-agents/agent-bricks-cli).
 
@@ -99,7 +96,7 @@ curl -sS http://localhost:8002/api/invocations \
 
 Retain `session_id` for follow-ups and use a fresh invocation UUID every request. Use globally unique session IDs and authorize ownership server-side before accepting a request; never let an unrelated actor reuse another actor's session ID. AgentKit's saver resolves/caches sessions by the derived thread ID, while the process-local saver also keys by thread. Merely changing actor does not isolate a reused session ID. The top-level invocation session is the LangGraph thread; `DEMO_ACTOR_ID` (default `agent`) controls the managed-state actor; `input.actor` is ignored. The UI uses the same fixed actor and ignores actor browse/search overrides. This sample is deliberately single-user/team; its UI and session IDs are not a multi-user authorization system. Application authentication must establish trusted identity before production use. The server handles async scheduling and event transport; graph/model/tool calls use `await`.
 
-For live acceptance, inspect trace/tool events for both `sales_specialist` and `inventory_specialist`, actual Genie ask calls, fetched result rows, and deep links. Compare generated SQL/results with the shared fixture's reviewed SQL. Also check sales-only and inventory-only questions, an ambiguous date, an unavailable domain, and a Genie failure. These workspace checks remain **unperformed**.
+For live acceptance, inspect trace/tool events for both `sales_specialist` and `inventory_specialist`, actual Genie ask calls, fetched result rows, and deep links. Compare generated SQL/results with the shared fixture's reviewed SQL. Also check sales-only and inventory-only questions, an ambiguous date, an unavailable domain, and a Genie failure.
 
 ## CLI vs SDK/code
 
@@ -120,6 +117,6 @@ Each delegation starts a fresh specialist context and Genie conversation. The su
 
 The supervisor has a bounded LangGraph recursion limit (25 by default); specialists cap at 20. Pending/failed Genie queries must be surfaced, never treated as completed results. The templates preserve synchronous checkpoint durability and invocation-associated recovery. Recovery is at least once: a delegation interrupted before its checkpoint can submit another read-only Genie query and incur additional compute. There is no exactly-once query guarantee. No ordering or replenishment write tool is exposed. [Agent Server durability](https://docs.databricks.com/aws/en/agents/deploy/agent-server).
 
-Verified October 20, 2026 against installed `databricks-agentbricks==0.6.0`, `databricks-langchain==0.21.0`, their `genie_tools`/`GenieAgent` source, generated `AGENTKIT_CONTRACT.md`, SDK method signatures and the linked official documentation. No live model, SQL warehouse, Genie resource, store permission or recovery behavior has been validated in a workspace.
+Verified October 20, 2026 against installed `databricks-agentbricks==0.6.0`, `databricks-langchain==0.21.0`, their `genie_tools`/`GenieAgent` source, generated `AGENTKIT_CONTRACT.md`, SDK method signatures and the linked official documentation. Perform the workspace checks above in each target workspace; a local pass does not validate model, Genie, store permission or recovery behavior there.
 
 Dependency resolution uses pinned Agent Bricks 0.6.0, databricks-langchain 0.21.0 and SDK 0.154.0. A complete `uv.lock` is included. Offline tests pass in this sample's separately synced environment using `uv run --frozen --offline pytest -q`.

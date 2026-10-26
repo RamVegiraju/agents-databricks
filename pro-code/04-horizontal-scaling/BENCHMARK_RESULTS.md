@@ -1,6 +1,27 @@
 # Horizontal scaling benchmarks
 
-## Two separate Apps, 2026-10-26
+## Two-App live recheck, 2026-10-26
+
+Both Medium Apps were redeployed from the same source with fixed one- and three-instance counts.
+The CLI confirmed all configured instances were active and running, then ran Locust sequentially
+for 30 seconds at each user level with graceful drain. Both used the same synthetic graph workload,
+prompt, managed stores, and load runner.
+
+| Concurrent users | 1 instance req/s | 3 instances req/s | Gain | p95 latency, 1 → 3 | Failures |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 0.66 | 0.65 | 0.99× | 2.6 → 3.7 s | 0 / 0 |
+| 4 | 1.69 | 2.36 | 1.40× | 2.6 → 2.4 s | 0 / 0 |
+| 8 | 2.44 | 3.66 | 1.50× | 5.3 → 2.6 s | 0 / 0 |
+| 16 | 2.25 | 5.69 | **2.53×** | 9.3 → 4.4 s | 0 / 0 |
+
+Locust recorded **230** completed requests on one instance and **393** on three, with no failures
+or incomplete requests. MLflow had **625 `OK` traces** in the run window: those 623 load requests
+plus one preflight invocation per App. Rates use completed requests divided by elapsed time,
+including drain. This is one short synthetic run, not a capacity estimate. The anonymized
+aggregates are [one instance](benchmark-results/2026-10-26-recheck/one-instance-controlled.json)
+and [three instances](benchmark-results/2026-10-26-recheck/three-instances-controlled.json).
+
+## Earlier two-App run, 2026-10-26
 
 The standalone sample was deployed from the same checkout as two Medium Apps: one fixed at one
 instance and one fixed at three. Both used the same synthetic model settings, prompt, managed

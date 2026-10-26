@@ -44,7 +44,9 @@ uv run --frozen agentbricks --profile <profile> endpoint invoke agent-bricks-<un
 ```
 
 `deploy` creates or updates the named Databricks App and returns its URL. The App uses its own
-identity to call the model. Reusing `<unique-name>` updates that App.
+identity to call the model. Reusing `<unique-name>` updates that App. At startup, `uv run` installs
+the App's dependencies from `pyproject.toml`; the CLI source sync does not upload `uv.lock`.
+This sample has no bound MLflow tracing experiment.
 
 For a code walkthrough, show `agent.toml` (project settings), `app.yaml` (start command), `agent/agent.py` (graph and model), `agent/tools/sample_tool.py` (local tool), and `runtime/main.py` (HTTP server). `runtime/adapter.py` translates Agent Bricks invocations into LangGraph messages. The HTTP request contract is in [AGENTKIT_CONTRACT.md](AGENTKIT_CONTRACT.md).
 

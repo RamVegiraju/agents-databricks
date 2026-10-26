@@ -39,8 +39,8 @@ and pass the corresponding `agent-bricks-<name>` values to the comparison comman
 
 ## Measured result
 
-In a controlled run of this two-App workflow, throughput at 16 users was **2.23 req/s** with one
-instance and **5.44 req/s** with three (**2.44×**); p95 latency was **8.8 → 4.3 s**. All 616 load
-requests across the sweep completed without failure, and MLflow recorded 618 `OK` traces including
-two preflight invocations. This is one short run, not a capacity estimate. See
+In the latest controlled run, throughput at 16 users was **2.25 req/s** with one instance and
+**5.69 req/s** with three (**2.53×**); p95 latency was **9.3 → 4.4 s**. All 623 load requests
+across the sweep completed without failure, and MLflow recorded 625 `OK` traces including two
+preflight invocations. This is one short run, not a capacity estimate. See
 [benchmark evidence](BENCHMARK_RESULTS.md).
