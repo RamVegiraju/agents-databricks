@@ -3,7 +3,7 @@
 See [the 2026-10-23 live benchmark](BENCHMARK_RESULTS.md) for measured results and the model
 quota limitation observed in the real-agent run.
 
-This walkthrough uses the existing Hello World LangGraph agent to show an App serving requests
+This standalone sample uses the same LangGraph agent as Hello World to show an App serving requests
 from more than one replica and to measure end-to-end agent throughput. It changes the **fixed**
 instance count from 1 to 3. Databricks Apps documentation does not describe a request-rate or CPU
 trigger that automatically changes this count. The scaling event in this demo is the operator's
@@ -37,12 +37,12 @@ your own authorized identity. `APP_BEARER_TOKEN` is optional for an M2M caller w
 otherwise the benchmark gets a U2M token from `databricks auth token --profile`.
 
 ```bash
-cd pro-code/01-hello-memory
+cd pro-code/04-horizontal-scaling
 databricks auth profiles
 uv sync --frozen --group dev
 uv run --frozen agentbricks doctor .
-uv run --frozen agentbricks --profile <profile> deploy hello-memory-demo --source . --instances 1
-databricks apps get agent-bricks-hello-memory-demo --profile <profile> -o json
+uv run --frozen agentbricks --profile <profile> deploy horizontal-scaling-demo --source . --instances 1
+databricks apps get agent-bricks-horizontal-scaling-demo --profile <profile> -o json
 ```
 
 The last output should show a running App, a URL, and `compute_min_instances` and
@@ -66,16 +66,16 @@ uv run --locked python run.py \
 **Trigger the scale change** on the same App with the Databricks Apps CLI:
 
 ```bash
-databricks apps create-update agent-bricks-hello-memory-demo \
+databricks apps create-update agent-bricks-horizontal-scaling-demo \
   --json '{"update_mask":"compute_min_instances,compute_max_instances","app":{"compute_min_instances":3,"compute_max_instances":3}}' \
   --profile <profile>
-databricks apps get agent-bricks-hello-memory-demo --profile <profile> -o json
+databricks apps get agent-bricks-horizontal-scaling-demo --profile <profile> -o json
 ```
 
 Wait for the update to finish, then confirm `compute_min_instances` and
 `compute_max_instances` are 3. The docs say the App keeps serving traffic during a count change.
 The Agent Bricks CLI can also change the count with `uv run --frozen agentbricks --profile
-<profile> deploy hello-memory-demo --source . --instances 3`; that path includes a new source
+<profile> deploy horizontal-scaling-demo --source . --instances 3`; that path includes a new source
 deployment, so the Apps update isolates the compute change more clearly. Run the benchmark again:
 
 ```bash

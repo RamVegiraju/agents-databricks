@@ -3,9 +3,6 @@
 An explicit LangGraph model/tool loop with one local UTC clock tool, browser chat, and the current
 AgentKit memory/session integrations.
 
-For a one-versus-three instance Apps demo with replica evidence and a Locust benchmark, see
-[Horizontal scaling](HORIZONTAL_SCALING.md) and the [live results](BENCHMARK_RESULTS.md).
-
 ```text
 Browser → DurableAgentServer → runtime/adapter.py → LangGraph agent ↔ tools → END
 Session Store: graph checkpoints + separate pipeline-readable transcript sessions
@@ -46,7 +43,7 @@ not prove managed-memory persistence.
 
 ## Managed memory locally, without deployment
 
-These optional commands create workspace resources when YOU run them; none has been executed.
+These optional commands create workspace resources when you run them.
 Choose unique names and edit the bindings if these example names already belong to another project.
 
 ```bash
@@ -189,10 +186,7 @@ No setup is invoked by tests or app startup.
 
 Checked against installed AgentKit0.6.0 langgraph/memory.py, langgraph/session_store.py,
 resource session_store.py/memory_store.py and CLI memory/pipeline/sessions source/help.
-The [2026-10-23 live benchmark](BENCHMARK_RESULTS.md) validated deployment, store creation,
-App access, real model calls, and one-to-three instance routing in `e2-dogfood-staging`.
-Pipeline extraction, conversation continuity after worker loss, and remote MLflow export were
-outside that benchmark.
+Pipeline extraction and conversation continuity after worker loss remain unverified.
 
 References:
 [LangGraph](https://docs.langchain.com/oss/python/langgraph/quickstart),

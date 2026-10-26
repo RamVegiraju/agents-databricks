@@ -1,11 +1,12 @@
 # Horizontal scaling benchmark, 2026-10-23
 
-Workspace: `e2-dogfood-staging` (`6051921418418893`). App:
-`agent-bricks-hello-memory-demo`, Medium compute. The same deployed source, App URL, Runtime
+The run used a staging workspace and Medium App compute. The same deployed source, App URL, Runtime
 Store, Session Store, prompt, and Locust runner were used within each one-versus-three pair.
 Scaling was a manual Apps update with `compute_min_instances` and `compute_max_instances` both set
 to 1 or both set to 3. App status reported the matching number of active and running instances;
 60 distinct `X-Routing-Key` probes reached one process in the baseline and three in the scaled run.
+This archived run preceded the extraction of this standalone sample. The agent and load-test code
+used for the run are retained here; new deployments use separate store and experiment names.
 
 ## Controlled agent workload
 
@@ -28,21 +29,18 @@ representing a strict 30-second steady-state window.
 
 Completed requests at 16 users were 85 over approximately 35.6 seconds and 172 over approximately
 32.3 seconds respectively. Native Locust CSV snapshots were written before shutdown finished and
-show 80 and 165 requests; the final summary records the additional completions. The
-[MLflow experiment](https://e2-dogfood.staging.cloud.databricks.com/ml/experiments/1127448673891747?compareRunsMode=TRACES)
-contains exactly 85 and 172 `OK` traces in the corresponding 16-user windows, independently
+show 80 and 165 requests; the final summary records the additional completions. MLflow contains
+exactly 85 and 172 `OK` traces in the corresponding 16-user windows, independently
 confirming the final counts. The one-instance curve nearly
 plateaued at 8–16 users while latency continued rising. This is one short run per configuration,
 run in that order; it demonstrates a gain for this controlled workload, not a production capacity
 estimate or a guarantee of linear scaling. Shared state services, client bandwidth, and workload
 mix can change the result.
 
-The raw aggregate summaries are saved in the repo as
+The aggregate summaries are saved in the repo with workspace and replica identifiers anonymized as
 [one instance](benchmark-results/2026-10-23/one-instance-controlled.json) and
-[three instances](benchmark-results/2026-10-23/three-instances-controlled.json). Local Locust
-HTML/CSV reports from the original run are under `scripts/loadtest/results/one-instance-mock` and
-`scripts/loadtest/results/three-instances-mock` locally (ignored by Git). Reproduce the table from
-the checked-in aggregates with:
+[three instances](benchmark-results/2026-10-23/three-instances-controlled.json). Native Locust
+HTML/CSV reports are not committed. Reproduce the table from the checked-in aggregates with:
 
 ```bash
 cd scripts/loadtest
@@ -62,8 +60,7 @@ databricks-claude-sonnet-4-5`. MLflow independently shows 24 `OK` and 24 `ERROR`
 one-instance 8-user stage, and 23 `OK` and 10 `ERROR` traces for the three-instance 4-user stage.
 The real-model runs therefore do not establish an App throughput
 gain; the workspace-wide FMAPI quota is a shared bottleneck, and the two runs were not isolated
-from other workspace traffic. These raw runs are under `results/one-instance` and
-`results/three-instances` locally. The saved aggregates are
+from other workspace traffic. The saved aggregates are
 [one instance](benchmark-results/2026-10-23/one-instance-real.json) and
 [three instances](benchmark-results/2026-10-23/three-instances-real.json).
 

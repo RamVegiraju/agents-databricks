@@ -1,15 +1,15 @@
 {
   "label": "three-instances-mock",
   "recorded_at_utc": "2026-10-23T20:45:53.295715+00:00",
-  "app_url": "https://agent-bricks-hello-memory-demo-6051921418418893.staging.aws.databricksapps.com",
-  "profile": "e2-dogfood-staging",
+  "app_url": "<app-url>",
+  "profile": "<profile>",
   "prompt": "Reply with exactly one short sentence saying hello.",
   "duration_seconds_per_level": 30,
   "replica_count_observed": 3,
   "replica_request_counts": {
-    "c7768ddc-4cde-4273-bd55-ca3d88dc39b9": 26,
-    "d41d8ff9-93bc-4f23-b991-6b34aab2861d": 19,
-    "5e34cfc3-d9c9-41a3-801f-7056b9d8d741": 15
+    "replica-1": 26,
+    "replica-2": 19,
+    "replica-3": 15
   },
   "levels": [
     {
