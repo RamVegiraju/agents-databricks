@@ -8,7 +8,7 @@ authors = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "databricks-agentbricks[langgraph]==0.6.0",
+    "databricks-agentbricks[langgraph]==0.7.0",
     "databricks-langchain==0.21.0",
     "uvicorn>=0.41.0",
     "python-dotenv>=1.2.1",

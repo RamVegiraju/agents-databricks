@@ -3,7 +3,7 @@
 The Agent Bricks CLI starts a new LangGraph project with:
 
 ```bash
-uvx --from databricks-agentbricks==0.6.0 agentbricks init --framework langgraph my-agent
+uvx --from databricks-agentbricks==0.7.0 agentbricks init --framework langgraph my-agent
 ```
 
 That command creates a separate `my-agent/` scaffold with a chat UI and declared memory/session
@@ -59,6 +59,6 @@ For a code walkthrough, show `agent.toml` (project settings), `app.yaml` (start 
 
 Run offline checks with `uv run --frozen pytest -q`.
 
-Commands and runtime wiring were checked against Agent Bricks CLI 0.6.0, the
+Commands and runtime wiring were checked against Agent Bricks CLI 0.7.0, the
 [CLI documentation](https://docs.databricks.com/aws/en/agents/custom-agents/agent-bricks-cli), and
 the [Agent Bricks source](https://github.com/databricks/databricks-ai-bridge/tree/main/integrations/agentbricks/src).

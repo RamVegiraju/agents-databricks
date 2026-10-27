@@ -1,6 +1,7 @@
 """A small LangGraph tool loop, independent of the HTTP server."""
 
 from collections.abc import AsyncGenerator
+from functools import lru_cache
 from typing import Any
 
 from databricks_agentkit import workspace_client, workspace_headers
@@ -61,9 +62,15 @@ def configure() -> None:
     configure_tracing()
 
 
+@lru_cache(maxsize=1)
+def _app_workspace_client():
+    """Reuse the App identity client across requests in this process."""
+    return workspace_client()
+
+
 def create_agent_graph() -> Any:
     model = _RoutedChatDatabricks(
-        endpoint=MODEL, workspace_client=workspace_client(), use_ai_gateway=True
+        endpoint=MODEL, workspace_client=_app_workspace_client(), use_ai_gateway=True
     )
     return build_graph(model, checkpointer())
 

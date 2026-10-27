@@ -1,0 +1,11 @@
+schema_version = 1
+
+[agent]
+framework = "langgraph"
+server = "agentbricks"
+deployment_name = "mcp-research"
+
+[[tools]]
+id = "web_search"
+auth = "app"
+source = {kind = "mcp", service = "system.ai.web_search"}

@@ -1,0 +1,19 @@
+schema_version = 1
+
+[agent]
+framework = "langgraph"
+server = "agentbricks"
+deployment_name = "retail-assistant"
+
+[memory_store]
+name = "northstar-retail-memory"
+
+[session_store]
+name = "northstar-retail-sessions"
+
+[tracing]
+experiment_name = "/Shared/agentbricks_traces/retail-assistant-demo"
+
+# External resources are intentionally not bound to fake IDs.
+# After explicit resource setup, use tools add genie-agent and tools add mcp.
+# See resources/agent.bindings.toml.example and README.md.

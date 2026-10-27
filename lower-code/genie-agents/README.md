@@ -6,7 +6,7 @@ This is the lower-code counterpart to the pro-code LangGraph examples. A retail 
 |---|---|---|
 | Northstar Sales | `northstar_demo.retail.sales` | Which products generated the most net revenue October 1–3, 2026? |
 | Northstar Inventory | `northstar_demo.retail.inventory` | Which SKU/warehouse pairs were below reorder point on October 3, 2026? |
-| Northstar Retail (sample 03) | Both tables | Compare October 1–3 sales with October 3 stock by SKU. |
+| Northstar Retail (sample 06) | Both tables | Compare October 1–3 sales with October 3 stock by SKU. |
 
 The first two are separate domain agents for the supervisor. The combined retail configuration is an alternative for the full-stack sample's single tabular agent; it does not replace those separate agents.
 
@@ -42,13 +42,13 @@ uv run --frozen python render_sql.py fixtures --catalog '<catalog>' --schema '<s
 uv run --frozen python render_sql.py validate --catalog '<catalog>' --schema '<schema>' > /tmp/northstar-validate.sql
 uv run --frozen python render_request.py sales --catalog '<catalog>' --schema '<schema>' --warehouse-id '<warehouse-id>' > /tmp/northstar-sales-create.json
 uv run --frozen python render_request.py inventory --catalog '<catalog>' --schema '<schema>' --warehouse-id '<warehouse-id>' > /tmp/northstar-inventory-create.json
-# Alternative tabular agent for sample 03:
+# Alternative tabular agent for sample 06:
 uv run --frozen python render_request.py retail --catalog '<catalog>' --schema '<schema>' --warehouse-id '<warehouse-id>' > /tmp/northstar-retail-create.json
 ```
 
 The rendering commands only write local SQL and JSON files. The `serialized_space` request property is a JSON **string**, while the checked-in asset is a JSON **object**; the renderer handles encoding. The tests verify serialization rules, namespace remapping, and run all nine example SELECTs against the actual fixture VALUES in SQLite. Combined queries are also checked with an extra inventory snapshot to catch date leakage and inflated sales. SQLite validates this portable query subset, not Delta DDL or Genie service acceptance.
 
-Version 2, lowercase 32-hex IDs, string arrays, sorting, and column settings were checked against the current [serialized-space rules](https://docs.databricks.com/aws/en/genie-agents/conversation-api#validation-rules-for-serialized_space) on October 20, 2026. Some older examples earlier on that same page still use version 1; the explicit validation section says to use 2 for new agents. SDK 0.154.0 takes `serialized_space: str` and does not validate its internals. Validate service acceptance in each target workspace.
+Version 2, lowercase 32-hex IDs, string arrays, sorting, and column settings were checked against the current [serialized-space rules](https://docs.databricks.com/aws/en/genie-agents/conversation-api#validation-rules-for-serialized_space) on October 26, 2026. Some older examples earlier on that same page still use version 1; the explicit validation section says to use 2 for new agents. SDK 0.157.0 takes `serialized_space: str` and does not validate its internals. Validate service acceptance in each target workspace.
 
 ## CLI lifecycle
 
@@ -102,7 +102,7 @@ message = w.genie.start_conversation_and_wait(
 print(json.dumps(message.as_dict(), indent=2))
 ```
 
-Use `w.genie.get_space(space_id, include_serialized_space=True)` to export and `w.genie.update_space(space_id, serialized_space=...)` to change an existing agent rather than creating duplicates. Code-managed curation controls the same resource as the UI. The SDK signatures above were inspected in SDK 0.154.0.
+Use `w.genie.get_space(space_id, include_serialized_space=True)` to export and `w.genie.update_space(space_id, serialized_space=...)` to change an existing agent rather than creating duplicates. Code-managed curation controls the same resource as the UI. The SDK signatures above were inspected in SDK 0.157.0.
 
 ## Permissions, costs, and integration boundaries
 

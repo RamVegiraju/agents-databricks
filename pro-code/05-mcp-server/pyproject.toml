@@ -1,0 +1,38 @@
+[project]
+name = "agentbricks-mcp-research"
+version = "0.1.0"
+description = "LangGraph research agent using a managed MCP service"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "databricks-agentbricks[langgraph]==0.7.0",
+    "databricks-langchain==0.21.0",
+    "uvicorn>=0.41.0",
+    "python-dotenv>=1.2.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["agent", "runtime"]
+
+[dependency-groups]
+dev = ["pytest>=9.0.2", "pytest-asyncio>=1.3.0"]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["agent", "runtime", "tests"]
+
+[project.scripts]
+start-server = "runtime.main:main"

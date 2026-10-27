@@ -1,0 +1,15 @@
+schema_version = 1
+
+[agent]
+framework = "langgraph"
+server = "agentbricks"
+deployment_name = "agent-memory"
+
+[memory_store]
+name = "agent-memory-demo-memory"
+
+[session_store]
+name = "agent-memory-demo-sessions"
+
+[tracing]
+experiment_name = "/Shared/agentbricks_traces/agent-memory-demo"

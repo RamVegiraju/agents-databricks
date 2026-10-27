@@ -3,3 +3,4 @@ schema_version = 1
 [agent]
 framework = "langgraph"
 server = "agentbricks"
+deployment_name = "cli-quickstart"

@@ -2,7 +2,7 @@
 name = "northstar-genie-assets"
 version = "0.1.0"
 requires-python = ">=3.11"
-dependencies = ["databricks-sdk>=0.154.0,<0.155"]
+dependencies = ["databricks-sdk==0.157.0"]
 
 [dependency-groups]
 dev = ["pytest>=8,<10"]

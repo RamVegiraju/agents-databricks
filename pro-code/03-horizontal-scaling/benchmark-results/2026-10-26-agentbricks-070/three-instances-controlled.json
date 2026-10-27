@@ -1,0 +1,28 @@
+{
+  "label": "three-instances",
+  "recorded_at_utc": "2026-10-26T21:04:37.284795+00:00",
+  "app_url": "<three-instance-app-url>",
+  "profile": "<profile>",
+  "prompt": "Reply with exactly one short sentence saying hello.",
+  "duration_seconds_per_level": 30,
+  "levels": [
+    {
+      "users": 16,
+      "exit_code": 0,
+      "started_at_utc": "2026-10-26T21:04:04.456666+00:00",
+      "finished_at_utc": "2026-10-26T21:04:37.284783+00:00",
+      "started": 164,
+      "completed": 164,
+      "failures": 0,
+      "incomplete": 0,
+      "elapsed_seconds_including_drain": 32.528748124997946,
+      "requests_per_second": 5.041694176787824,
+      "latency_ms_p50": 2700,
+      "latency_ms_p95": 6000,
+      "latency_ms_mean": 3056.5869126282737
+    }
+  ],
+  "app_name": "<three-instance-app>",
+  "compute_size": "MEDIUM",
+  "configured_instances": 3
+}
