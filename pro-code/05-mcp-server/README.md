@@ -4,7 +4,9 @@ This LangGraph agent uses the Databricks-managed `system.ai.web_search` MCP serv
 
 ## Run
 
-Choose a Databricks CLI profile and a unique deployment name:
+Choose a Databricks CLI profile and a unique deployment name.
+If needed, create the profile with `databricks auth login --host <workspace-url> --profile <profile>`.
+From the repository root:
 
 ```bash
 cd pro-code/05-mcp-server

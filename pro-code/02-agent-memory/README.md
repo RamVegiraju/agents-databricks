@@ -4,7 +4,9 @@ This LangGraph agent shows two kinds of state on Databricks Apps: a **Session St
 
 ## Deploy
 
-Choose a Databricks CLI profile for a workspace with Apps, managed stores, an MLflow experiment, and access to `system.ai.claude-sonnet-4-5` (or change `MODEL` in `agent/agent.py`). From the repository root:
+Choose a Databricks CLI profile for a workspace with Apps, managed stores, an MLflow experiment, and access to `system.ai.claude-sonnet-4-5` (or change `MODEL` in `agent/agent.py`).
+If needed, create the profile with `databricks auth login --host <workspace-url> --profile <profile>`.
+From the repository root:
 
 ```bash
 cd pro-code/02-agent-memory

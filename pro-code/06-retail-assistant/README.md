@@ -70,6 +70,8 @@ unless `RUN_LIVE_TESTS=1` is explicitly set. Keep it unset during offline review
 Choose your profile and UC names before applying. Prerequisites: existing
 catalog/schema, SQL warehouse, supported AI Search region and available
 embedding model. Scripts never auto-select a workspace or warehouse.
+If needed, create the profile with
+`databricks auth login --host <workspace-url> --profile YOUR_PROFILE`.
 
 ### 1. Tabular data and curated Genie
 
@@ -85,12 +87,13 @@ configure a **retail Genie Agent containing both tables**. Use the combined
 `uv run --frozen python render_request.py retail --catalog YOUR_CATALOG --schema YOUR_SCHEMA --warehouse-id YOUR_WAREHOUSE_ID` renders
 its create request offline. Its CTE examples preaggregate sales before joining
 inventory and scope stock to one snapshot date. Follow the lower-code README to
-review and explicitly create that resource later. Sample 02's sales-only Genie
+review and explicitly create that resource later. Sample 04's sales-only Genie
 answers only sales prompts.
 
 From this project directory, bind an existing retail Genie ID:
 
 ```bash
+cd "$(git rev-parse --show-toplevel)/pro-code/06-retail-assistant"
 uv run --frozen agentbricks --profile YOUR_PROFILE tools add genie-agent YOUR_REAL_GENIE_ID --name retail --auth app
 ```
 
@@ -231,14 +234,6 @@ uv run --frozen agentbricks --profile YOUR_PROFILE deploy YOUR_AGENT_NAME --sour
 databricks apps get agent-bricks-YOUR_AGENT_NAME --profile YOUR_PROFILE
 ```
 
-After the grants below are applied, verify the deployed agent with a new invocation UUID:
-
-```bash
-uv run --frozen agentbricks --profile YOUR_PROFILE endpoint invoke agent-bricks-YOUR_AGENT_NAME \
-  --path /api/invocations \
-  --json '{"id":"11111111-1111-4111-8111-111111111111","session_id":"retail-demo-1","input":{"messages":[{"role":"user","content":"Can a Rain Shell be returned after 20 days? Search the policy and cite the relevant passage."}]},"stream":false}'
-```
-
 Attach the policy index and both Genie source tables to the App service
 principal. This preserves the Genie and tracing resources that deployment added:
 
@@ -249,6 +244,14 @@ uv run --frozen python -m scripts.grant_app_access --profile YOUR_PROFILE --app 
 
 The command expects `sales`, `inventory`, and `policy_index` in that schema. Run
 it again after redeployment if the App's resource list changes.
+
+Verify the deployed agent with a new invocation UUID:
+
+```bash
+uv run --frozen agentbricks --profile YOUR_PROFILE endpoint invoke agent-bricks-YOUR_AGENT_NAME \
+  --path /api/invocations \
+  --json '{"id":"11111111-1111-4111-8111-111111111111","session_id":"retail-demo-1","input":{"messages":[{"role":"user","content":"Can a Rain Shell be returned after 20 days? Search the policy and cite the relevant passage."}]},"stream":false}'
+```
 
 Example prompts and evidence to inspect:
 

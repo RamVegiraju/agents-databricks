@@ -14,7 +14,9 @@ deployment still uses Agent Bricks' Runtime Store for invocation records.
 
 ## Run locally
 
-Choose a Databricks CLI profile for a workspace with access to `system.ai.claude-sonnet-4-5` (or change `MODEL` in `agent/agent.py`):
+Choose a Databricks CLI profile for a workspace with access to `system.ai.claude-sonnet-4-5` (or change `MODEL` in `agent/agent.py`).
+If needed, create the profile with `databricks auth login --host <workspace-url> --profile <profile>`.
+From the repository root:
 
 ```bash
 cd pro-code/01-agentbricks-cli

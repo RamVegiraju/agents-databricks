@@ -33,9 +33,10 @@ After separately reviewing and setting up the fixture tables, open **Genie Agent
 
 ## Local inspection and tests
 
-From this directory:
+From the repository root:
 
 ```bash
+cd lower-code/genie-agents
 uv sync --frozen --group dev
 uv run --frozen pytest
 uv run --frozen python render_sql.py fixtures --catalog '<catalog>' --schema '<schema>' > /tmp/northstar-fixtures.sql
@@ -53,6 +54,8 @@ Version 2, lowercase 32-hex IDs, string arrays, sorting, and column settings wer
 ## CLI lifecycle
 
 All commands below contact a workspace. Replace placeholders and review the rendered payload first. CLI syntax was inspected locally with Databricks CLI 1.20.0 `--help`.
+If needed, create a named profile with
+`databricks auth login --host <workspace-url> --profile <profile>`.
 
 **Provisioning:** execute the reviewed `/tmp/northstar-fixtures.sql` in the SQL editor using the chosen warehouse. Run `/tmp/northstar-validate.sql` to inspect the fixture results. Then these commands create persistent Genie Agent objects; running them again creates additional agents.
 

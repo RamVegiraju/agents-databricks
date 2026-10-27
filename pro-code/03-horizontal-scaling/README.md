@@ -9,10 +9,13 @@ exercises the graph and durable stores without calling a model endpoint or tools
 
 Use a Databricks CLI profile for a workspace where you can create Apps, managed stores, and an
 MLflow experiment, with capacity for four App instances. These commands use `rsync` to make two
-temporary deployment source copies. From the repository root:
+temporary deployment source copies.
+If needed, create the profile with `databricks auth login --host <workspace-url> --profile <profile>`.
+From the repository root:
 
 ```bash
 cd pro-code/03-horizontal-scaling
+databricks auth profiles
 uv sync --frozen --group dev
 demo_sources="$(mktemp -d)"
 rsync -a --exclude '.venv' --exclude '.env' --exclude 'results' ./ "$demo_sources/one/"

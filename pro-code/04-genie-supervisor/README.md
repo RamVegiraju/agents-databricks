@@ -3,6 +3,8 @@
 A custom Python supervisor delegates to **two separately curated Genie Agents**: sales and inventory. Ask “Which best-selling products are below their reorder point?” and the supervisor can consult both domains, match `product_id`, and synthesize an evidence-backed recommendation. This is pro-code orchestration, not a managed Agent Bricks Supervisor resource.
 
 The two space IDs in `agent.toml` are deliberately nonexistent examples. Bind Genie Agents created in your workspace before running or deploying. A binding is configuration, not proof of a successful Genie call.
+Use a named Databricks CLI profile for the target workspace. If needed, create it with
+`databricks auth login --host <workspace-url> --profile <profile>`.
 
 ```mermaid
 flowchart TD
@@ -45,9 +47,10 @@ These tests inject model responses and SDK clients. They verify both-domain dele
 
 ## Bind Genie Agents and deploy
 
-First create and validate the fixture tables and the sales and inventory Genie Agents using the shared lower-code README. Record the two returned space IDs. Install the project (`uv sync --frozen`). Bind the IDs into this local manifest:
+First create and validate the fixture tables and the sales and inventory Genie Agents using the shared lower-code README. Record the two returned space IDs. Return to `pro-code/04-genie-supervisor`, install its dependencies (`uv sync --frozen`), and bind the IDs into this local manifest:
 
 ```bash
+cd "$(git rev-parse --show-toplevel)/pro-code/04-genie-supervisor"
 uv run --frozen python bind_genie.py \
   --sales-space-id '<sales-space-id>' \
   --inventory-space-id '<inventory-space-id>'
