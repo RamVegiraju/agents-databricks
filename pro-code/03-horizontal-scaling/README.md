@@ -8,13 +8,17 @@ exercises the graph and durable stores without calling a model endpoint or tools
 ## Run the demo
 
 Use a Databricks CLI profile for a workspace where you can create Apps, managed stores, and an
-MLflow experiment, with capacity for four App instances. From the repository root:
+MLflow experiment, with capacity for four App instances. These commands use `rsync` to make two
+temporary deployment source copies. From the repository root:
 
 ```bash
 cd pro-code/03-horizontal-scaling
 uv sync --frozen --group dev
-uv run --frozen agentbricks --profile <profile> deploy hs-one --source . --instances 1
-uv run --frozen agentbricks --profile <profile> deploy hs-three --source . --instances 3
+demo_sources="$(mktemp -d)"
+rsync -a --exclude '.venv' --exclude '.env' --exclude 'results' ./ "$demo_sources/one/"
+rsync -a --exclude '.venv' --exclude '.env' --exclude 'results' ./ "$demo_sources/three/"
+uv run --frozen agentbricks --profile <profile> deploy hs-one --source "$demo_sources/one" --instances 1
+uv run --frozen agentbricks --profile <profile> deploy hs-three --source "$demo_sources/three" --instances 3
 cd scripts/loadtest
 uv sync --frozen
 uv run --frozen python run_comparison.py \
@@ -32,10 +36,13 @@ throughput, latency, completed requests, and failures. It saves HTML/CSV and
 their fixed counts afterward. See the [walkthrough](HORIZONTAL_SCALING.md) for architecture and
 benchmark details.
 
-The App and load tester have separate uv projects; run the load test commands from
+The two source copies start from the same code and keep the CLI's App-specific `agent.toml` and
+`app.yaml` edits separate. The App and load tester have separate uv projects; run the load test commands from
 `scripts/loadtest`. `--profile` selects the workspace; deploy creates the stores and experiment
 declared in `agent.toml` there. Use unused deployment names if `hs-one` or `hs-three` already exist,
-and pass the corresponding `agent-bricks-<name>` values to the comparison command.
+and pass the corresponding `agent-bricks-<name>` values to the comparison command. Review the
+Memory Store, Session Store, and tracing names in `agent.toml` before using another workspace;
+choose unused names if existing resources there have different access settings.
 
 ## Measured result
 

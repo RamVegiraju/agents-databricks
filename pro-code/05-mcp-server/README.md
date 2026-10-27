@@ -16,7 +16,7 @@ uv run --frozen agentbricks --profile <profile> deploy <unique-name> --source .
 databricks apps get agent-bricks-<unique-name> --profile <profile>
 ```
 
-`agent.toml` already binds `system.ai.web_search` with App identity. To demonstrate how the CLI adds a managed MCP service in a fresh project, run `agentbricks --profile <profile> tools add mcp system.ai.web_search --name web_search --auth app` there. Do not repeat that command in this checked-in directory; the binding already exists.
+`agent.toml` already binds `system.ai.web_search` with App identity. If `tools list` does not show that service in your workspace, choose an available managed MCP service and update the binding and prompt before deploying. To demonstrate how the CLI adds this service in a fresh project, run `uv run --frozen agentbricks --profile <profile> tools add mcp system.ai.web_search --name web_search --auth app` there. Do not repeat that command in this checked-in directory; the binding already exists.
 
 Invoke the deployed agent with a fresh UUID:
 

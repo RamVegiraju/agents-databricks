@@ -33,9 +33,10 @@ The required Genie creation SDK is `WorkspaceClient().genie.create_space(warehou
 
 ## Offline checks — safe to run without a workspace
 
-From this directory, install dependencies and run:
+From the repository root, enter this sample, install dependencies, and run:
 
 ```bash
+cd pro-code/04-genie-supervisor
 uv sync --frozen
 uv run --frozen pytest -q
 ```
@@ -72,6 +73,14 @@ After local verification, choose a unique App name and review the Session Store,
 ```bash
 uv run --frozen agentbricks --profile '<profile>' deploy '<app-name>' --source .
 databricks apps get 'agent-bricks-<app-name>' --profile '<profile>'
+```
+
+Invoke the deployed App with a new UUID and session ID to verify a real specialist call:
+
+```bash
+uv run --frozen agentbricks --profile '<profile>' endpoint invoke 'agent-bricks-<app-name>' \
+  --path /api/invocations \
+  --json '{"id":"11111111-1111-4111-8111-111111111111","session_id":"genie-demo-1","input":{"messages":[{"role":"user","content":"Use the sales Genie Agent to find the product with the highest net revenue from October 1 through October 3, 2026. Fetch the query rows."}]},"stream":false}'
 ```
 
 The deploy command provisions or binds resources declared in the manifest and creates or updates a Databricks App with the `agent-bricks-` prefix. Keep `<app-name>` to 17 characters so the full App name fits the 30-character limit. Deployment reconciles Genie Agent grants, but it does **not** grant Unity Catalog data access. Read the App's `service_principal_client_id` from `databricks apps get`; grant that principal `USE CATALOG` on your catalog, `USE SCHEMA` on your demo schema, and `SELECT` on the two fixture tables. Verify the deployed response and trace; App readiness alone does not prove that Genie calls worked.

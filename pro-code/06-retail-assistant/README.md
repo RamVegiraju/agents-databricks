@@ -49,9 +49,10 @@ workspace.
 
 ## Offline validation
 
-From this directory:
+From the repository root:
 
 ```bash
+cd pro-code/06-retail-assistant
 uv sync --frozen
 uv run --frozen pytest
 uv run --frozen python -m scripts.ingest_policies
@@ -178,13 +179,13 @@ resources, roll back or swallow the error. Registration does not prove tool use.
 | Policy source/index | Setup needs parent UC privileges, source-table write/CDF and AI Search creation permissions; runtime needs `USE CATALOG`, `USE SCHEMA`, `SELECT` on the index |
 | Embeddings | Index setup identity needs permission to query the embedding endpoint |
 | Connection/MCP | Registration needs parent use privileges, schema `CREATE CONNECTION` and `CREATE SERVICE` (or existing connection `USE CONNECTION`); runtime needs parent use privileges and MCP Service `EXECUTE` |
-| Sessions/memory | Manifest declares intent; Agent Bricks provisions and grants access during authorized deployment; default `dev` uses local state |
+| Sessions/memory | Manifest declares intent; Agent Bricks provisions and grants access during deployment; default `dev` uses local state |
 
 CLI tool commands own Genie/MCP manifest bindings. `mcp_tools()` and
 `genie_tools()` own native framework integration. Our code owns prompts, citation
 retrieval and AI Search ingestion/lifecycle. **The custom Python AI Search tool
 is not an `agent.toml` binding**: explicitly configure its grants and
-`POLICY_INDEX_NAME` when later deployment is authorized. The CLI does not infer
+`POLICY_INDEX_NAME` when deploying. The CLI does not infer
 those dependencies from Python source.
 
 `auth=app` provides shared read-only tool access here. `auth=user` requires the
@@ -195,7 +196,7 @@ forwarded identity headers and UI memory actor overrides. This is not production
 authentication or tenant isolation. Session IDs are still supplied by clients;
 implement trusted per-user identity and session ownership before multi-user use.
 
-## Run the full stack later
+## Run the full stack
 
 After setup/grants are reviewed, copy `.env.example` to `.env`, replace `YOUR_PROFILE`
 and `YOUR_CATALOG.YOUR_SCHEMA.policy_index`, then start locally:
@@ -228,6 +229,14 @@ with `agent-bricks-`:
 ```bash
 uv run --frozen agentbricks --profile YOUR_PROFILE deploy YOUR_AGENT_NAME --source .
 databricks apps get agent-bricks-YOUR_AGENT_NAME --profile YOUR_PROFILE
+```
+
+After the grants below are applied, verify the deployed agent with a new invocation UUID:
+
+```bash
+uv run --frozen agentbricks --profile YOUR_PROFILE endpoint invoke agent-bricks-YOUR_AGENT_NAME \
+  --path /api/invocations \
+  --json '{"id":"11111111-1111-4111-8111-111111111111","session_id":"retail-demo-1","input":{"messages":[{"role":"user","content":"Can a Rain Shell be returned after 20 days? Search the policy and cite the relevant passage."}]},"stream":false}'
 ```
 
 Attach the policy index and both Genie source tables to the App service

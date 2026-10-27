@@ -16,6 +16,8 @@ databricks apps get agent-bricks-<unique-name> --profile <profile>
 ```
 
 Open the App URL from `apps get` for the browser demo. The CLI deploy creates or reuses the stores and tracing experiment declared in `agent.toml`. Find the App under **Compute → Apps**. Reusing `<unique-name>` updates that App.
+Review the store and experiment names in `agent.toml` before deploying into another workspace;
+choose unused names if that workspace already has resources with different access settings.
 
 ## Demonstrate memory in two sessions
 
