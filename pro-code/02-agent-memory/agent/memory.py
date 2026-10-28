@@ -13,7 +13,7 @@ def selected_memory_tools(actor: str) -> list[BaseTool]:
     """Return four tools, or only recall/list when pipeline extraction owns writes."""
     if not actor:
         raise ValueError("A trusted actor is required")
-    mode = os.getenv("MEMORY_WRITE_MODE", "tools")
+    mode = os.getenv("MEMORY_WRITE_MODE", "pipeline")
     if mode not in {"tools", "pipeline"}:
         raise ValueError("MEMORY_WRITE_MODE must be tools or pipeline")
     tools = memory_tools(actor)

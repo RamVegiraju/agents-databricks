@@ -1,6 +1,6 @@
 # Validation record
 
-Updated October 26, 2026. The video sequence is **01 CLI**, **02 memory**, **03 horizontal
+Updated October 27, 2026. The video sequence is **01 CLI**, **02 memory**, **03 horizontal
 scaling**, **04 Genie supervisor**, and **05 MCP**. Sample **06 retail assistant** combines the
 integrations as an advanced example.
 
@@ -13,7 +13,7 @@ each pro-code project.
 | Current sample | Offline tests | Doctor | Live check |
 | --- | ---: | ---: | --- |
 | 01 CLI quickstart | 2 passed | 8/8 | Deployed clock-tool invocation completed |
-| 02 Agent memory | 46 passed, 1 skipped | 8/8 | Remembered in one session, recalled in another, then forgot the fact |
+| 02 Agent memory | 61 passed, 1 skipped | 8/8 | Pipeline distillation plus four natural-language retrieval spot checks; [evidence](../pro-code/02-agent-memory/VALIDATION.md) |
 | 03 Horizontal scaling | 46 passed, 1 skipped | 8/8 | One- and three-instance Apps passed the 0.7.0 Locust recheck |
 | 04 Genie supervisor | 45 passed, 1 skipped | 8/8 | Sales specialist returned Genie SQL and fetched rows |
 | 05 MCP server | 1 passed | 8/8 | Managed `web_search` MCP returned a tool result and cited answer |
@@ -21,10 +21,12 @@ each pro-code project.
 | Lower-code Genie assets | 7 passed | n/a | Fixture tables and curated Genie Agents answered reviewed questions |
 | Locust runner | 5 passed | n/a | Included in the two-App test above |
 
-The local runner passed **208 tests** with **4 live tests skipped** on Agent Bricks CLI 0.7.0.
-The live checks used an explicitly selected workspace profile and inspected tool calls and results,
-not only App readiness. The Genie, retail, and memory checks used a Sonnet 5 request override to
-avoid the shared Sonnet 4.5 quota encountered in earlier tests. The MCP check used its default model.
+The local runner passed **223 tests** with **4 live tests skipped** on Agent Bricks CLI 0.7.0.
+The October 27 push checks reran all offline suites and all six onboarding checks; they did not
+rerun every historical live integration or the load benchmark. Live results below were inspected
+through tool calls/results, not only App readiness. Earlier Genie, retail, and direct-memory
+checks used a Sonnet 5 override. The October 27 memory pipeline and natural-language tests used
+`system.ai.claude-sonnet-4-5`; the MCP check used its default model.
 
 The 0.7.0 scaling recheck completed **244 requests** at 16 users with no failures or incomplete
 requests. Throughput was **2.34 → 5.04 requests/s** and p95 latency **9.4 → 6.0 s** for one versus
@@ -45,4 +47,7 @@ not traffic-triggered autoscaling.
   Databricks SDK 0.157.0, installed AgentKit source, CLI help, and the linked official
   documentation in each sample README.
 
-No workspace host, profile, resource ID, or credential is recorded in the tracked samples.
+Reusable startup configuration excludes deployment-generated connection settings. The memory
+sample's explicitly labeled validation evidence records its demo profile/resource identifiers
+for reproducibility; those identifiers are not credentials. Tokens and local credential files
+are excluded from version control.

@@ -2,6 +2,22 @@
 
 This LangGraph agent uses the Databricks-managed `system.ai.web_search` MCP service. AgentKit reads the binding in `agent.toml`, discovers its tools for each invocation, and offers them to the model. No third-party MCP account or token is required. Your workspace must expose the service and allow the App identity to use it.
 
+## Repository structure and adaptation
+
+Focus on the declarative managed-MCP binding and how discovered tools reach both the model and executor. This sample consumes an existing MCP service; it does not implement an MCP server. To adapt it, choose an available service, match the prompt to its tools, and verify actual tool execution.
+
+| File or directory | Role in this demo | Adapt for your own agent |
+| --- | --- | --- |
+| [agent.toml](agent.toml) | Binds system.ai.web_search as web_search with App identity. | Select your service, binding name, and supported auth model; verify workspace availability. |
+| [agent/agent.py](agent/agent.py) | Model/prompt, mcp_tools() discovery, and the LangGraph tool loop. | Change task instructions/model; preserve discovery into both tool binding and execution. |
+| [runtime/adapter.py](runtime/adapter.py) | Invocation input/output translation and recovery. | Change only for a new client contract or identity requirements. |
+| [runtime/main.py](runtime/main.py) | Starts DurableAgentServer. | Usually retain. |
+| [app.yaml](app.yaml) | Server startup command and deployment-generated settings. | Set application environment; regenerate workspace-specific deployment values rather than copying them. |
+| [pyproject.toml](pyproject.toml) | AgentKit, LangGraph, and MCP dependencies. | Manage additional dependencies here. |
+| [uv.lock](uv.lock) | Generated dependency lockfile for local commands. | Regenerate with uv after intentional dependency changes. |
+| [tests/test_agent.py](tests/test_agent.py) | Offline graph/tool/runtime checks. | Add representative service-result, tool-error, and output-evidence cases. |
+| [AGENTKIT_CONTRACT.md](AGENTKIT_CONTRACT.md) | HTTP and durable invocation integration contract. | Consult before changing server integration. |
+
 ## Run
 
 Choose a Databricks CLI profile and a unique deployment name.

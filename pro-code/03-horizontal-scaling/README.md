@@ -5,6 +5,27 @@ one with three. Locust tests each ready App at the same concurrency levels and p
 Traffic does not automatically change either instance count. The default synthetic model workload
 exercises the graph and durable stores without calling a model endpoint or tools.
 
+## Repository structure and adaptation
+
+Focus on the controlled workload and the comparison runner: this demo compares fixed provisioned capacity, not autoscaling. For your own workload, first replace the synthetic model path and request mix, then compare identical code/configuration at different instance counts.
+
+| File or directory | Role in this demo | Adapt for your own agent |
+| --- | --- | --- |
+| [agent/benchmark_model.py](agent/benchmark_model.py) | Synthetic CPU workload that avoids model-service quotas. | Keep for infrastructure comparisons; use a representative workload before drawing production-capacity conclusions. |
+| [agent/agent.py](agent/agent.py) | Graph and synthetic-versus-real-model selection. | Review SCALING_BENCHMARK_MOCK_MODEL handling and your actual model/tool path. |
+| [app.yaml](app.yaml) | Enables the mock model and sets SCALING_BENCHMARK_CPU_MS. | Set workload controls consistently across the compared deployments. |
+| [agent.toml](agent.toml) | Store, tracing, framework, and deployment declarations. | Choose appropriate resources and names in your workspace; instance counts are passed to deploy. |
+| [scripts/loadtest/run_comparison.py](scripts/loadtest/run_comparison.py) | Waits for ready Apps, runs staged comparisons, and builds the report. | Choose Apps, concurrency levels, duration, and readiness limits. |
+| [scripts/loadtest/locustfile.py](scripts/loadtest/locustfile.py) | Request payloads, sessions, timing, and final request statistics. | Model realistic prompts, session reuse, request mix, and success criteria. |
+| [scripts/loadtest/compare.py](scripts/loadtest/compare.py) | Compares exported benchmark measurements. | Adjust comparisons only when the measurement definition changes. |
+| [scripts/loadtest/pyproject.toml](scripts/loadtest/pyproject.toml) | Separate uv environment for the load tester. | Install load-test dependencies here, independently of the agent environment. |
+| [runtime/](runtime/) | Invocation, durable recovery, and browser/state integration. | Retain for comparable measurements; change only when the application contract changes. |
+| [ui/](ui/) | Optional interactive chat and state inspection. | Use for inspection rather than generating benchmark traffic. |
+| [tests/](tests/) | Offline agent/runtime/state checks. | Verify your workload changes before deploying. |
+| [pyproject.toml](pyproject.toml) | Agent dependencies; uv.lock is its generated local lockfile. | Manage agent dependencies separately from scripts/loadtest. |
+| [HORIZONTAL_SCALING.md](HORIZONTAL_SCALING.md) | Detailed architecture and benchmark procedure. | Use as the experiment design reference. |
+| [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md) | Checked-in evidence from earlier runs. | Record new measurements separately; generated reports appear under scripts/loadtest/results/ after execution. |
+
 ## Run the demo
 
 Use a Databricks CLI profile for a workspace where you can create Apps, managed stores, and an

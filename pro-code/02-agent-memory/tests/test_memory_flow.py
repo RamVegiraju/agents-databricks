@@ -120,6 +120,12 @@ def test_pipeline_mode_omits_writers_and_actor_is_not_a_model_parameter(monkeypa
     )
 
 
+def test_pipeline_is_the_default_memory_writer(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("AGENT_MEMORY_STORE", "test-store")
+    monkeypatch.delenv("MEMORY_WRITE_MODE", raising=False)
+    assert {t.name for t in selected_memory_tools("agent")} == {"recall", "list_memories"}
+
+
 @pytest.mark.asyncio
 async def test_released_list_and_forget_tools_support_correction(monkeypatch):
     from databricks_agentkit.langgraph import memory
@@ -235,4 +241,63 @@ def test_pipeline_transcript_excludes_system_and_tool_messages():
             ]
         )
         == []
+    )
+
+
+@pytest.mark.asyncio
+async def test_transcripts_use_the_dedicated_store(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from agent import transcript
+
+    store = TranscriptStore()
+    selected = []
+
+    def get_store(name: str) -> TranscriptStore:
+        selected.append(name)
+        return store
+
+    monkeypatch.setenv("AGENT_TRANSCRIPT_STORE", "readable-transcripts")
+    monkeypatch.setenv("AGENT_SESSION_STORE", "opaque-checkpoints")
+    monkeypatch.setattr(transcript, "workspace_client", lambda: None)
+    monkeypatch.setattr(
+        transcript,
+        "AgentKitClient",
+        lambda _: SimpleNamespace(session_stores=SimpleNamespace(get=get_store)),
+    )
+    await transcript.record_turn(
+        "alice", "chat-A", "inv-1", [{"role": "user", "content": "Python"}]
+    )
+    assert selected == ["readable-transcripts"]
+    assert len(store.sessions) == 1
+
+
+@pytest.mark.asyncio
+async def test_unconfigured_transcripts_make_no_remote_call(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from agent import transcript
+
+    monkeypatch.delenv("AGENT_TRANSCRIPT_STORE", raising=False)
+    monkeypatch.setattr(
+        transcript, "workspace_client", lambda: pytest.fail("unexpected remote call")
+    )
+    await transcript.record_turn(
+        "alice", "chat-A", "inv-1", [{"role": "user", "content": "Python"}]
+    )
+
+
+@pytest.mark.asyncio
+async def test_local_dev_does_not_write_to_managed_transcripts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from agent import transcript
+
+    monkeypatch.setenv("AGENT_TRANSCRIPT_STORE", "readable-transcripts")
+    monkeypatch.setenv("DATABRICKS_AGENTBRICKS_RUNTIME_STORE_LOCAL", "true")
+    monkeypatch.setattr(
+        transcript, "workspace_client", lambda: pytest.fail("unexpected remote call")
+    )
+    await transcript.record_turn(
+        "alice", "chat-A", "inv-1", [{"role": "user", "content": "Python"}]
     )

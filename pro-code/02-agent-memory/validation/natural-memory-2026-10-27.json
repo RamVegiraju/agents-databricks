@@ -1,0 +1,170 @@
+{
+  "date": "2026-10-27",
+  "profile": "ml-demos",
+  "app": "agent-bricks-agent-memory",
+  "model": "system.ai.claude-sonnet-4-5",
+  "deployed_source_settings": {
+    "MEMORY_WRITE_MODE": "pipeline",
+    "MEMORY_AUTO_RECALL": "false",
+    "AGENT_MEMORY_STORE": "agent-memory-demo-memory"
+  },
+  "setup": "Two existing pipeline-derived Cedar preference entries; each case used a fresh UUID session and invocation. No user prompt named recall.",
+  "cases": [
+    {
+      "case": "preference",
+      "prompt": "What example style do I prefer for project Cedar?",
+      "invocation_id": "d29683f0-1bb6-42cd-89d7-37215d3d5986",
+      "session_id": "5195f9f4-bd0a-403b-a54e-bf9106445455",
+      "elapsed_seconds": 20.42,
+      "exit_code": 0,
+      "status": "completed",
+      "tool_calls": [
+        {
+          "id": "toolu_bdrk_01M7eB9EiDCCRtN1Ho1tkdJb",
+          "args": {
+            "query": "project Cedar example style preference"
+          },
+          "name": "recall",
+          "type": "tool_call"
+        }
+      ],
+      "tool_results": [
+        {
+          "name": "recall",
+          "status": "success",
+          "content": "projects/cedar.md [session transcript-6bb4c217296df0ca4d59c8d9641eaf1e1c3a05b43802473e2b57b649be509098]:\n  # Project Cedar\n  ## Preferences\n  - Use concise Python examples\npreferences/cedar.md [session transcript-8e80f17045e1440e01eec4ddd92bc6083a4ea7f10cdf7a4c40d7144b973234d4]:\n  - Prefers concise Python examples for Cedar code/documentation"
+        }
+      ],
+      "answer": "Based on my memory, you prefer **concise Python examples** for project Cedar. This preference has been noted in your long-term memory for both code and documentation related to the Cedar project."
+    },
+    {
+      "case": "apply_preference",
+      "prompt": "I'm writing project Cedar documentation. Show a function that removes duplicate strings, following my usual example style.",
+      "invocation_id": "c259c6aa-04bb-4567-b190-a263384046b6",
+      "session_id": "85afbb94-f6cf-4bc9-892b-81f018f7727a",
+      "elapsed_seconds": 25.45,
+      "exit_code": 0,
+      "status": "completed",
+      "tool_calls": [
+        {
+          "id": "toolu_bdrk_01SnuJWY81AoB2CGMJnEh8mD",
+          "args": {
+            "query": "documentation example style code format"
+          },
+          "name": "recall",
+          "type": "tool_call"
+        },
+        {
+          "id": "toolu_bdrk_014Gu29EdKrp2PwNpyUPmytM",
+          "args": {
+            "query": "Cedar project documentation style"
+          },
+          "name": "recall",
+          "type": "tool_call"
+        }
+      ],
+      "tool_results": [
+        {
+          "name": "recall",
+          "status": "success",
+          "content": "preferences/cedar.md [session transcript-8e80f17045e1440e01eec4ddd92bc6083a4ea7f10cdf7a4c40d7144b973234d4]:\n  - Prefers concise Python examples for Cedar code/documentation\nprojects/cedar.md [session transcript-6bb4c217296df0ca4d59c8d9641eaf1e1c3a05b43802473e2b57b649be509098]:\n  # Project Cedar\n  ## Preferences\n  - Use concise Python examples"
+        },
+        {
+          "name": "recall",
+          "status": "success",
+          "content": "projects/cedar.md [session transcript-6bb4c217296df0ca4d59c8d9641eaf1e1c3a05b43802473e2b57b649be509098]:\n  # Project Cedar\n  ## Preferences\n  - Use concise Python examples\npreferences/cedar.md [session transcript-8e80f17045e1440e01eec4ddd92bc6083a4ea7f10cdf7a4c40d7144b973234d4]:\n  - Prefers concise Python examples for Cedar code/documentation"
+        }
+      ],
+      "answer": "Based on your preferences for Project Cedar, here's a concise Python example for removing duplicate strings:\n\n```python\ndef remove_duplicates(strings: list[str]) -> list[str]:\n    \"\"\"Remove duplicate strings while preserving order.\"\"\"\n    seen = set()\n    result = []\n    for s in strings:\n        if s not in seen:\n            seen.add(s)\n            result.append(s)\n    return result\n\n# Example\nitems = [\"apple\", \"banana\", \"apple\", \"cherry\", \"banana\"]\nunique = remove_duplicates(items)  # [\"apple\", \"banana\", \"cherry\"]\n```\n\nThis follows your usual concise style with type hints, a brief docstring, and a practical example showing the function in action."
+    },
+    {
+      "case": "missing_fact",
+      "prompt": "Which testing framework have I chosen for project Cedar?",
+      "invocation_id": "a03aa045-b61f-41e6-a8ec-20de4bd91f77",
+      "session_id": "30f86c72-9954-4b08-8ef7-956ddcc9eeb5",
+      "elapsed_seconds": 9.93,
+      "exit_code": 0,
+      "status": "completed",
+      "tool_calls": [
+        {
+          "id": "toolu_bdrk_01UPfkFExAUtgb1XqGxkoB5i",
+          "args": {
+            "query": "project Cedar testing framework"
+          },
+          "name": "recall",
+          "type": "tool_call"
+        }
+      ],
+      "tool_results": [
+        {
+          "name": "recall",
+          "status": "success",
+          "content": "projects/cedar.md [session transcript-6bb4c217296df0ca4d59c8d9641eaf1e1c3a05b43802473e2b57b649be509098]:\n  # Project Cedar\n  ## Preferences\n  - Use concise Python examples\npreferences/cedar.md [session transcript-8e80f17045e1440e01eec4ddd92bc6083a4ea7f10cdf7a4c40d7144b973234d4]:\n  - Prefers concise Python examples for Cedar code/documentation"
+        }
+      ],
+      "answer": "I don't see any information about a testing framework choice for project Cedar in my memory. The stored information only mentions your preference for concise Python examples for Cedar code and documentation.\n\nCould you tell me which testing framework you've chosen, or would you like me to help you decide on one?"
+    },
+    {
+      "case": "unrelated",
+      "prompt": "What is 17 multiplied by 19? Just give the number.",
+      "invocation_id": "f44bc8a8-8d86-4998-b1fe-f9622188faa5",
+      "session_id": "c16fb926-26de-4d86-a8c5-6a68f3c9af77",
+      "elapsed_seconds": 5.94,
+      "exit_code": 0,
+      "status": "completed",
+      "tool_calls": [],
+      "tool_results": [],
+      "answer": "323"
+    }
+  ],
+  "trace_cross_check": [
+    {
+      "trace_id": "tr-123192d00774b312172c4b81c2da6b84",
+      "status": "OK",
+      "spans": [
+        {
+          "name": "invoke",
+          "type": "\"UNKNOWN\""
+        },
+        {
+          "name": "LangGraph",
+          "type": "\"CHAIN\""
+        },
+        {
+          "name": "agent",
+          "type": "\"CHAIN\""
+        },
+        {
+          "name": "_RoutedChatDatabricks",
+          "type": "\"CHAT_MODEL\""
+        },
+        {
+          "name": "tools_condition",
+          "type": "\"CHAIN\""
+        },
+        {
+          "name": "tools",
+          "type": "\"CHAIN\""
+        },
+        {
+          "name": "recall",
+          "type": "\"TOOL\""
+        },
+        {
+          "name": "agent",
+          "type": "\"CHAIN\""
+        },
+        {
+          "name": "_RoutedChatDatabricks",
+          "type": "\"CHAT_MODEL\""
+        },
+        {
+          "name": "tools_condition",
+          "type": "\"CHAIN\""
+        }
+      ]
+    }
+  ],
+  "scope": "One run per prompt, four prompts, one model, a small existing memory dataset. This is a live spot check, not a statistical reliability or retrieval-scale benchmark.",
+  "generated_example_check": "The observed duplicate-removal function passed four local input/output and non-mutation checks."
+}

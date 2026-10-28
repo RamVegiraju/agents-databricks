@@ -2,11 +2,11 @@
 
 import asyncio
 import hashlib
+import os
 from typing import Any
 
 from databricks.sdk.errors import AlreadyExists, ResourceAlreadyExists
 from databricks_agentkit import AgentKitClient, workspace_client
-from databricks_agentkit.runtime.tool_manifest import resolve_session_store
 
 
 def transcript_session_id(actor: str, invocation_id: str) -> str:
@@ -74,8 +74,11 @@ def persist_turn(
 async def record_turn(
     actor: str, session_id: str, invocation_id: str, messages: list[dict[str, Any]]
 ) -> None:
-    """Write to the bound store; perform no remote calls when no store is configured."""
-    store_name = resolve_session_store(None)
+    """Write to the dedicated transcript store, skipping CLI local mode."""
+    # CLI dev retains custom app env vars, but explicitly marks its runtime local.
+    if os.getenv("DATABRICKS_AGENTBRICKS_RUNTIME_STORE_LOCAL", "").lower() == "true":
+        return
+    store_name = os.getenv("AGENT_TRANSCRIPT_STORE", "").strip()
     if not store_name:
         return
 

@@ -1,1 +1,8 @@
 command: ["uv", "run", "start-server"]
+env:
+  - name: MEMORY_WRITE_MODE
+    value: pipeline
+  - name: MEMORY_AUTO_RECALL
+    value: "false"
+  - name: AGENT_TRANSCRIPT_STORE
+    value: agent-memory-demo-transcripts

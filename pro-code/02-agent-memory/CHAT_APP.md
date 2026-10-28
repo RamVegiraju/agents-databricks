@@ -2,6 +2,10 @@
 
 # LangGraph Chat App Overlay
 
+The memory sample defaults to pipeline-only writes. The Memory pane browses existing entries;
+pipeline creation, scheduling, and on-demand runs use the CLI as documented in README.md. Completing
+a chat turn saves its transcript but does not trigger a pipeline run.
+
 `agentbricks init --framework langgraph` copies this framework-specific overlay after the base
 `agent-langgraph` template (it is included by default; `--disable-chat-app` opts out). It is
 intentionally not a post-generation mutation command.

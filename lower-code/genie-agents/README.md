@@ -12,6 +12,23 @@ The first two are separate domain agents for the supervisor. The combined retail
 
 Genie Agents were previously called Genie Spaces. The SDK, CLI, IDs, and REST paths retain `space` terminology. Genie handles SQL generation and execution; it does not require your own Agent Bricks server. [Genie API documentation](https://docs.databricks.com/aws/en/genie-agents/conversation-api)
 
+## Repository structure and adaptation
+
+Focus on curated context and reviewed SQL rather than Python orchestration. Adapt definitions and examples to your data first; use the renderers for workspace names and request encoding. Sales/inventory are the separate domains for sample 04; retail is the combined tabular agent for sample 06.
+
+| File or directory | Role in this demo | Adapt for your own agent |
+| --- | --- | --- |
+| [assets/sales.serialized-space.json](assets/sales.serialized-space.json) | Sales table context, columns, questions, and SQL examples. | Define your sales grain, metrics, entities, date semantics, and trusted example queries. |
+| [assets/inventory.serialized-space.json](assets/inventory.serialized-space.json) | Inventory snapshot context and examples. | Define snapshot grain, stock semantics, and applicable thresholds. |
+| [assets/retail.serialized-space.json](assets/retail.serialized-space.json) | Combined tabular agent with compatible-grain joins. | Review joins/aggregation across your domains; preserve correct date and snapshot filters. |
+| [sql/fixtures.sql](sql/fixtures.sql) | Opt-in synthetic schema/table setup and fixture MERGEs. | Replace demo values/schema with reviewed setup, or connect existing governed data. |
+| [sql/validate.sql](sql/validate.sql) | Reference queries and expected fixture results. | Replace with warehouse-validated checks for your definitions. |
+| [render_request.py](render_request.py) | Offline request generation, namespace remapping, and JSON-string encoding. | Pass your catalog/schema/warehouse; change domain descriptions and asset choices if adding domains. |
+| [render_sql.py](render_sql.py) | Offline fixture/validation SQL namespace remapping. | Use the same target namespace as the Genie request renderer. |
+| [tests/test_assets.py](tests/test_assets.py) | Serialization, namespace remapping, and local SQL fixture checks. | Add your curated-query cases; validate Delta DDL and service acceptance in the target workspace separately. |
+| [pyproject.toml](pyproject.toml) | Renderer/test dependencies. | Manage local dependencies here. |
+| [uv.lock](uv.lock) | Generated dependency lockfile. | Regenerate with uv after dependency changes. |
+
 ## Demo semantics and assets
 
 This fictional example defines net revenue as the supplied USD amount after discounts, excludes returns and tax, and defines low stock as `on_hand_units < reorder_point_units` for each warehouse. Inventory is a point-in-time snapshot: never sum across dates. These are demo definitions, not inferred definitions for a real business.

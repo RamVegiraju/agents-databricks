@@ -21,6 +21,28 @@ flowchart TD
 
 The explicit `StateGraph` is in `agent/supervisor.py`. Its model chooses delegation tools; the `ToolNode` executes them and returns results to the supervisor. Each specialist is a LangChain `create_agent` graph with only its own native Genie tool triple. `genie_tools()` loads real bindings from `agent.toml`; no hand-written REST adapter or fabricated answers are used in application code. The underlying adapter calls `WorkspaceClient.genie.start_conversation`, `get_message`, and `get_message_attachment_query_result`, offloading synchronous SDK calls to threads. [Genie API](https://docs.databricks.com/aws/en/genie-agents/conversation-api), [LangGraph agent loops](https://docs.langchain.com/oss/python/langgraph/workflows-agents).
 
+## Repository structure and adaptation
+
+Focus on two separately curated Genie domains, their stable binding names, and the supervisor's delegation/synthesis policy. Adapt the curated data agents first, bind their real IDs, then change routing rules and tests. Adding a manifest binding alone does not create a new specialist.
+
+| File or directory | Role in this demo | Adapt for your own agent |
+| --- | --- | --- |
+| [agent/supervisor.py](agent/supervisor.py) | Supervisor and specialist prompts, domain-scoped tools, and delegation graph. | Change domains, routing, handoff context, and evidence rules. Current specialist construction explicitly expects sales and inventory. |
+| [bind_genie.py](bind_genie.py) | Replaces the two placeholder space IDs while preserving the manifest. | Supply real sales/inventory IDs; extend the helper if the set of domains changes. |
+| [agent.toml](agent.toml) | Genie bindings plus session/memory/tracing declarations. | Keep binding IDs aligned with specialist tool names; choose workspace resource names and auth mode. |
+| [agent/agent.py](agent/agent.py) | Builds native Genie tools, supervisor dependencies, sessions, tracing, and model access. | Choose your model and compose any additional capabilities here. |
+| [agent/mcps.py](agent/mcps.py) | Extension point for additional MCP servers. | Use when your supervisor needs governed capabilities beyond Genie. |
+| [../../lower-code/genie-agents/](../../lower-code/genie-agents/) | Shared fixture SQL and curated sales/inventory definitions. | Replace with your schemas, metric definitions, descriptions, and reviewed SQL examples. |
+| [runtime/adapter.py](runtime/adapter.py) | Maps invocation/session/actor identity and recovery. | Integrate verified identity and ownership for a multi-user application. |
+| [runtime/main.py](runtime/main.py) | Durable server startup. | Usually retain. |
+| [runtime/ui.py](runtime/ui.py) | Browser/state routes. | Align session and memory access with your identity model. |
+| [ui/](ui/) | Chat, session inspection, and model selection. | Customize presentation and useful domain prompts. |
+| [tests/test_supervisor.py](tests/test_supervisor.py) | Delegation, domain isolation, and Genie adapter checks. | Add your routing, ambiguity, unavailable-domain, and evidence cases. |
+| [tests/test_bind_genie.py](tests/test_bind_genie.py) | Binding-helper checks. | Update when the manifest/domain contract changes. |
+| [app.yaml](app.yaml) | Startup and deployed environment. | Configure application values; let deploy resolve managed settings. |
+| [pyproject.toml](pyproject.toml) | Dependencies; uv.lock is generated for local frozen commands. | Add domain dependencies deliberately and regenerate the lockfile with uv. |
+| [AGENTKIT_CONTRACT.md](AGENTKIT_CONTRACT.md) | Transport, state, and recovery requirements. | Read before changing runtime integration. |
+
 ## Shared synthetic domain and setup
 
 Use the SQL fixture and Genie configuration assets in [lower-code/genie-agents](../../lower-code/genie-agents/README.md). Its renderers put the fixture SQL and Genie configuration in a catalog and schema you choose in the target workspace. They define:

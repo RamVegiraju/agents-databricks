@@ -56,6 +56,12 @@ Include `memory_tools(actor)` in model and execution wiring. It returns no tools
 Its closures capture actor identity, so never reuse them across users. The application owns trusted
 actor/tenant authentication; a payload field alone does not establish identity.
 
+This sample defaults to `MEMORY_WRITE_MODE=pipeline`, filtering that tool set to `recall` and
+`list_memories`. Completed turns also write readable transcript items through `agent/transcript.py` to the separate
+`AGENT_TRANSCRIPT_STORE`, which must be created and granted to the App explicitly.
+A separately configured memory pipeline distills them asynchronously. Store binding and deployment
+do not create or schedule a pipeline; see the README for explicit setup and run monitoring.
+
 ### Tracing
 
 Call `configure_tracing()` after loading config, then wrap agent execution, including streams, in

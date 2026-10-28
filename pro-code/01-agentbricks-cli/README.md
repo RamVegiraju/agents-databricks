@@ -180,21 +180,24 @@ uv run --frozen agentbricks --profile "$PROFILE" deployments start "agent-bricks
 `--yes` skips the stop confirmation. Use `deploy` again when code changes need uploading.
 Stopping App compute does not delete its backing data resources.
 
-## Files to show in a code walkthrough
+## Repository structure and adaptation
 
-| File | Purpose |
-| --- | --- |
-| [agent.toml](agent.toml) | Framework, server, deployment name, and any declared managed bindings. |
-| [agent/tools/sample_tool.py](agent/tools/sample_tool.py) | Python clock tool returning an ISO-formatted UTC timestamp. |
-| [agent/agent.py](agent/agent.py) | Model/prompt, tool binding, model → tool → model graph, and checkpoint/recovery logic. |
-| [runtime/main.py](runtime/main.py) | Constructs `DurableAgentServer`, registers handlers, and starts Uvicorn. The server implementation comes from the installed AgentKit package. |
-| [runtime/adapter.py](runtime/adapter.py) | Validates message/session input, runs the graph, translates graph events into runtime events, and collects final messages. |
-| [app.yaml](app.yaml) | App startup command and CLI-generated deployment environment settings. |
-| [pyproject.toml](pyproject.toml) | Dependencies, tests, package configuration, and the `start-server` entry point. |
-| [uv.lock](uv.lock) | Generated dependency lockfile used by the local frozen commands. |
-| [tests/](tests/) | Offline graph/tool and server-route tests. |
-| [AGENTKIT_CONTRACT.md](AGENTKIT_CONTRACT.md) | Request shape, runtime wiring, and state/recovery limitations. |
-| [.agentbricks/](.agentbricks/) | CLI-generated local state, traces, and background-deployment logs; its checked-in `project.toml` records scaffold provenance. |
+Start with the clock tool and graph to understand the smallest API-only agent. For your own use case, replace the tool and prompt first, then choose deployment bindings. Read the runtime contract before changing request shapes or recovery.
+
+| File or directory | Role in this demo | Adapt for your own agent |
+| --- | --- | --- |
+| [agent/tools/sample_tool.py](agent/tools/sample_tool.py) | The local UTC clock used to prove a real tool call. | Replace it with your domain operation; define useful tool arguments and results. |
+| [agent/agent.py](agent/agent.py) | Model, instructions, tool binding, and the model → tool → model graph. | Change the model and instructions; adjust graph control flow only when the task needs it. |
+| [agent/tools/__init__.py](agent/tools/__init__.py) | Discovers the local tool modules. | Keep registration consistent when adding or removing tool modules. |
+| [agent.toml](agent.toml) | Framework/server, deployment name, and optional managed bindings. | Choose your App name and required resources. This sample currently has no managed conversation or memory binding. |
+| [runtime/adapter.py](runtime/adapter.py) | Maps input messages and session IDs to graph runs and output events. | Edit for a different input/output contract; preserve invocation IDs and recovery behavior. |
+| [runtime/main.py](runtime/main.py) | Constructs and starts DurableAgentServer. | Usually retain; extend server startup only when required. |
+| [app.yaml](app.yaml) | Startup command; deployment adds environment settings. | Set application configuration; regenerate deployment-specific settings in the target workspace. |
+| [pyproject.toml](pyproject.toml) | Dependencies and start-server entry point. | Add dependencies for your domain tools. |
+| [uv.lock](uv.lock) | Generated dependency lockfile for local frozen commands. | Regenerate with uv after intentional dependency changes; do not hand-edit. |
+| [tests/](tests/) | Offline clock-loop and HTTP-route checks. | Replace clock expectations with representative tool behavior and failure cases. |
+| [AGENTKIT_CONTRACT.md](AGENTKIT_CONTRACT.md) | Invocation, checkpoint, and recovery integration requirements. | Consult before editing runtime integration. |
+| [.agentbricks/](.agentbricks/) | Scaffold provenance plus generated local traces/deployment state. | Keep provenance; treat local run output as generated, not application logic. |
 
 ## Troubleshooting and references
 
