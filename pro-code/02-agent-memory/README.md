@@ -4,6 +4,31 @@ Demonstrate **short-term memory** within a conversation and **long-term memory**
 
 The default `MEMORY_WRITE_MODE=pipeline` exposes only `recall` and `list_memories`. The agent cannot write facts directly, so the demo can attribute new facts to distillation. `MEMORY_AUTO_RECALL=false` keeps retrieval visible as tool calls. A local UTC clock tool is also available.
 
+## Demo story and value
+
+**The story:** an agent continues a conversation, learns a durable preference in the background,
+and applies it in a new conversation without the user repeating it. Show **history → pipeline →
+saved knowledge → useful answer**, inspecting the real records and tool results at each step.
+
+| Memory capability | Value to explain | Evidence to show |
+| --- | --- | --- |
+| Managed session persistence | Users continue the same conversation without restating its context. | A follow-up uses earlier facts; reopening A restores history. |
+| Explicit Session Store / Memory Store APIs | Applications can provision and inspect history and derived knowledge as separate resources. | Fresh-store CLI responses and the three store roles in the lifecycle section. The pipeline connects existing stores; it does not create the Memory Store. |
+| Automated pipeline extraction | Durable knowledge can be captured without the agent calling a save tool on every relevant turn. | Default mode has no `remember`; new facts appear only after a successful extraction run. |
+| Scheduled or on-demand distillation | Extraction runs outside the chat request; a presenter can trigger it deterministically and poll the same asynchronous run. | Scheduled policy, manual run ID, and `RUNNING` → `SUCCEEDED`. A configured schedule alone is not evidence that a scheduled run executed. |
+| Selective cross-session retrieval | The agent can find prior preferences when relevant and use them to personalize a new task. | B asks a natural question, calls `recall`, receives saved content, and applies the preference. Inspect actual calls; selection is model-dependent. |
+| Separate temporary context and durable knowledge | A conversation can retain details that should not become a lasting preference. | The temporary branch remains in A but is absent from the inspected Memory Store after extraction. |
+
+Use the [browser presenter script](#presenter-script-exact-questions-and-evidence) with a terminal
+beside it. To demonstrate provisioning too, begin with [fresh resource creation](#record-the-full-lifecycle-from-fresh-resources).
+The existing-resource walkthrough demonstrates reuse, not fresh creation. The UI session and
+Memory panes already come from the template; this sample wires managed history, readable transcript
+capture, pipeline-only extraction, and retrieval into that experience.
+
+Keep claims proportional to the evidence: this demonstrates capability, not measured quality/cost
+improvements or production scalability. Conversation-level transcript organization, identity,
+retention, and retrieval efficiency still need the production work described below.
+
 ## Agent tools and demo mode
 
 | Agent tool | Default pipeline mode | Purpose |
@@ -230,11 +255,11 @@ while discussing extraction instructions. If a recording compresses waiting, lab
 
 | Phase | What timing evidence we have |
 | --- | --- |
-| Store creation | Earlier calls succeeded, but per-store elapsed time was not measured. Use the timed commands above in rehearsal. |
-| Pipeline creation | Earlier creation succeeded, but its end-to-end call time was not separately measured. |
-| App deployment | Includes resource grants, compute startup, dependency installation, and server startup; time the full command in the rehearsal workspace. |
+| Store creation | Fresh-resource rehearsal: checkpoint store **2.90 s**, transcript store **4.18 s**, Memory Store **2.80 s**. |
+| Pipeline creation | Fresh scheduled pipeline creation: **3.18 s**. This configures the pipeline; it does not execute distillation. |
+| App deployment | Fresh app deployment: **146.52 s**; separate transcript grant **2.09 s**. Future runtime varies. |
 | Transcript eligibility | Current tutorial documents a 60-second freshness cutoff before new turns can be processed. |
-| Distillation execution | The validated manual backing-job run took about 108 seconds; future runtime can vary. |
+| Distillation execution | Latest rehearsal observed `RUNNING` → `SUCCEEDED` over **104.44 s**, excluding the freshness wait. See [rehearsal evidence](validation/full-rehearsal-2026-10-27.json); runtime varies. |
 
 This full setup sequence is an alternative to the reusable-resource setup below, not a second setup
 pass. It creates persistent resources and an enabled scheduled pipeline when executed. The temporary
@@ -353,18 +378,120 @@ uv run --frozen agentbricks --profile "$DEMO_PROFILE" deployments start "$DEMO_A
 
 ## Present the demo
 
-Use the browser for chat and the terminal for memory/pipeline APIs. Use a fresh example project name for each rehearsal, and inspect the store before claiming it is empty.
+Use two windows side by side: **the generated chat UI** for conversations, history, tool calls,
+and stored memory; **a terminal** for store creation and asynchronous pipeline triggering/polling.
+For a full creation demo, complete **Record the full lifecycle from fresh resources** first and
+keep its exported `DEMO_*` values. For a conversation-only demo, reuse the existing resources below.
 
-| Step | Action | Evidence to show |
+### Open the chat UI
+
+The pinned Agent Bricks 0.7.0 LangGraph template includes this zero-build browser UI by default
+(`--disable-chat-app` opts out). The sample customizes its title and memory guidance. It is served
+at the deployed App's root URL; no separate frontend deployment is needed. See [CHAT_APP.md](CHAT_APP.md)
+for the UI behavior and [ui/](ui/) / [runtime/ui.py](runtime/ui.py) for its implementation.
+
+For the existing validated deployment, run from `pro-code/02-agent-memory`:
+
+```bash
+export DEMO_PROFILE=ml-demos
+export DEMO_APP=agent-bricks-agent-memory
+export DEMO_MEMORY_STORE=memory-stores/agent-memory-demo-memory
+export DEMO_PIPELINE=memory-pipelines/22fb18be-a9c3-402e-86a3-8d5d688386d9
+uv run --frozen agentbricks --profile "$DEMO_PROFILE" deployments get "$DEMO_APP"
+# Run only when stopped, then wait for readiness before opening the browser.
+uv run --frozen agentbricks --profile "$DEMO_PROFILE" deployments start "$DEMO_APP"
+```
+
+Open the URL returned by the deployment command. For this existing App it is
+[the memory chat UI](https://agent-bricks-agent-memory-7474655512364318.aws.databricksapps.com).
+Sign in with access to the Databricks App. Its compute was **STOPPED** when checked on October 28;
+the link alone does not start it. For a fresh deployment, use that deployment's returned URL and
+resource variables instead of the existing-deployment values above.
+
+| UI control | Use during the demo |
+| --- | --- |
+| Chat composer and **Foreground** / **Streaming** | Ask the questions below. Foreground shows the complete answer; Streaming shows it as generated. |
+| **Sessions → New session** | Create B with a different conversation UUID while keeping the server-selected actor. Copy A's UUID before switching. |
+| **Sessions** list / refresh | Click a previous session row to reload its history. A page refresh retains the current UUID; it does not create B. |
+| **Memory** capability card | Open the Memory pane, refresh entries, search for the project, and click an entry to inspect its saved content. |
+| **Tool request** / **Tool result** chat messages | Show the actual `recall` arguments and returned memory before the answer. |
+| **Events** / **Traces** | Inspect invocation details; the Traces link opens the configured MLflow experiment. |
+
+The UI's **Background** option controls asynchronous *chat invocations*. It does not run memory
+distillation. This sample has no pipeline-management UI: start and monitor memory pipelines in the
+terminal. The Memory pane browses their output. `agentbricks dev` also serves a local UI, but its
+local history and disabled managed memory cannot validate this cross-session managed-memory demo.
+
+### What comes with the template, and what this sample adds
+
+Compared directly with the installed Agent Bricks 0.7.0 LangGraph UI overlay:
+
+| Already included in the template | Memory-sample addition or customization |
+| --- | --- |
+| Chat, model picker, Streaming / Background / Foreground modes | Memory-focused title, explanation, and starter prompts; **Background chat** label distinguishes chat execution from distillation. |
+| Session list, new-session creation, history reload | The sample binds a managed checkpoint store so the demo can show durable conversation history. |
+| Memory pane, entry search/details, tool request/result display | Pipeline-only memory writes, readable transcript recording, configured extraction instructions, and natural model-selected recall. The pane inspects actual store output. |
+| Events and MLflow experiment link | Pipeline run/poll helper and live validation evidence. Pipeline control stays in the terminal. |
+| Actor browsing UI | This sample makes the actor field read-only and uses its server-selected single-user demo actor. Production user identity is still an adaptation task. |
+
+We reuse the template's existing browser JavaScript and stylesheet. The sample does not add a
+second frontend or a pipeline control panel. Its starter buttons fill the composer without sending:
+edit `Willow` to a fresh project label before sending, use the same label in every prompt, and use
+starter 3 only after successful distillation and **New session**. Starter buttons appear in the
+empty chat view; follow-up questions can be typed or copied from the script below. Sharing a
+preference records history; it does not itself prove a Memory Store entry was created.
+
+### Presenter script: exact questions and evidence
+
+Use a fresh project label, such as **Willow-1028a**, and replace it consistently in every question.
+Check that this project's preference is absent from the Memory pane first; existing stores contain
+previous rehearsals. Keep the default pipeline-write mode and automatic recall off. Select the
+validated `system.ai.claude-sonnet-4-5` model for a comparable run.
+
+| Step | Ask or do | What to show / explain |
 | --- | --- | --- |
-| 1. Inspect baseline | Open Memory and list existing entries with the command below. | The new demo fact is absent. |
-| 2. Session A | “For project Cedar, I prefer concise Python examples. For this chat only, call the temporary test branch amber-42.” | A natural conversation; no `remember` tool is available. |
-| 3. Same session | “What example style do I prefer for Cedar, and what temporary branch did I mention?” Refresh the page and reopen A. | Short-term session state supplies both facts and restores history. |
-| 4. Before distillation | List the Memory Store again. | Chat history exists, but the durable preference has not yet been distilled (unless a scheduled run intervened). |
-| 5. Trigger now | Run the pipeline using the helper below after the final turn completes and its transcript is older than 60 seconds. | Actual asynchronous run name and `RUNNING` → `SUCCEEDED` status. |
-| 6. Inspect output | Refresh Memory; list and search entries. | A real entry contains the Cedar preference. Inspect whether the temporary branch was excluded. |
-| 7. New session B | First try “What example style do I prefer for project Cedar?” For a separate explicit-tool segment, ask “Use recall to find that preference.” | Inspect the actual recall call/result; distinguish natural tool selection from an explicit request. |
-| 8. Reopen A | Show its original conversation again. | Session history and distilled facts are separate resources. |
+| 1. Baseline | Open **Memory**, refresh, and inspect entries for `Willow-1028a`. Return to chat and click **New session**; note A's UUID. | The new preference is absent. With fresh resources the whole store should be empty; with reused resources only claim this fact is absent. |
+| 2. Give A two facts | **“For project Willow-1028a, I prefer concise Python examples. For this chat only, call the temporary test branch amber-42. Acknowledge both briefly.”** | The agent acknowledges both. No `remember` tool is available: this records history, not a direct memory write. |
+| 3. Short-term continuity | In A: **“From this conversation, what example style do I prefer for Willow-1028a, and what temporary branch did I mention?”** | The answer uses both facts from A's history. Inspect whether any tools ran; this step should not need long-term memory. |
+| 4. Durable history | Refresh the page and reopen A if needed. Inspect **Memory** again before triggering the pipeline. | Chat history remains; the new durable preference should still be absent from Memory unless a scheduled run intervened. |
+| 5. Distill outside chat | After the last completed turn, wait at least 65 seconds, then run the pipeline command below in the terminal. | Show its actual run ID and `RUNNING` → `SUCCEEDED`. Explain that a scheduled run uses the same background mechanism; this is an on-demand trigger. |
+| 6. Inspect derived memory | Open **Memory → Refresh memory entries**, then inspect the new project entry. | Confirm the saved Python preference and whether `amber-42` was excluded. Paths/wording can vary; inspect actual content. |
+| 7. Apply long-term memory in B | Click **New session**. Ask **“I'm writing documentation for project Willow-1028a. Show a function that removes duplicate strings, following my usual example style.”** | B's UUID differs from A's. Show the actual `recall` request/result and whether the answer uses the saved concise-Python preference. The prompt never names the tool. |
+| 8. Separate temporary context | In B: **“What was the temporary test-branch name I mentioned in my earlier conversation about Willow-1028a?”** | Inspect any search results. If it was excluded, the agent should report that it lacks the saved name. Do not put `amber-42` into this question. |
+| 9. Return to A | Click A's session row. Ask **“What temporary branch did I name earlier in this conversation?”** | A can still answer `amber-42` from its history although the branch was not saved as durable memory. |
+| 10. Optional selectivity | In a new session: **“What is 17 multiplied by 19? Just give the number.”** | Inspect actual behavior: the earlier test answered `323` without tools. This is a spot check that memory retrieval can be skipped. |
+
+Step 7's natural task was validated in the fresh-resource rehearsal. Step 8 is an additional
+presenter check; do not describe it as a guaranteed outcome. An optional missing-fact question is
+**“Which testing framework have I chosen for project Willow-1028a?”** The saved style preference does
+not answer that question; check that the agent acknowledges the missing information instead of
+inventing a framework. Earlier Cedar spot checks validated this distinction.
+
+**No End session action is required.** Wait for the final answer to finish, then allow the
+freshness interval below. **New session** changes the conversation UUID; it does not start a
+pipeline. Sharing a fact also does not start one. The configured schedule or an explicit CLI/API
+run starts distillation. An agent's acknowledgment is not proof that extraction has happened.
+
+For step 5, run from the sample directory with the selected deployment's variables:
+
+```bash
+# Start the wait after the final invocation completes, not when the prompt is submitted.
+sleep 65
+uv run --frozen python scripts/pipeline_run.py \
+  --profile "$DEMO_PROFILE" --pipeline "$DEMO_PIPELINE" --interval 10 --timeout 600
+```
+
+Continue to B only after `SUCCEEDED` and inspection of the extracted entry. If natural tool
+selection does not call `recall`, report that result; asking **“Use recall to find my saved example
+preference for project Willow-1028a.”** is a separate explicit-tool demonstration. The latest
+rehearsal selected three recall calls and one list call; exact call counts are not guaranteed and
+extra searches are not necessary to prove the feature.
+
+Allow roughly **6–10 minutes for an existing-resource presentation**, including conversation turns,
+the 65-second eligibility wait, and variable pipeline execution. Fresh setup additionally includes
+resource creation and App deployment; use the measured timings above as observations, not guarantees.
+A recording can compress waits if the actual elapsed time is labeled. The fresh-resource rehearsal
+and tool results are recorded in [VALIDATION.md](VALIDATION.md).
 
 The model controls wording and extraction: inspect the actual stored content, paths, and tool results instead of assuming an exact sentence/path. A two-turn conversation in one session alone does not prove long-term memory.
 
@@ -380,7 +507,23 @@ uv run --frozen python scripts/pipeline_run.py \
   --profile "$DEMO_PROFILE" --pipeline "$DEMO_PIPELINE"
 ```
 
+The command runs from your local terminal, but distillation executes remotely in Databricks. It needs the workspace profile and pipeline ID, not an App name: the pipeline already connects its transcript Session Store to its destination Memory Store. The deployed App writes transcripts; it does not execute the pipeline. Once transcripts are persisted and eligible, distillation does not require the App's compute to be running.
+
 The helper uses the pinned CLI's public `memory pipeline run` and `memory pipeline runs get` commands. It prints real API responses and exits 0 only on `SUCCEEDED`, 1 on failure, and 75 on monitoring timeout. A timeout leaves the remote job running; resume monitoring with `--run <full-run-resource-name>`, rather than starting another run. Pipeline runtime is variable; there is no immediate-completion promise.
+
+### Finish the presentation
+
+Stop the App compute when finished, preserving its stores and conversation history:
+
+```bash
+uv run --frozen agentbricks --profile "$DEMO_PROFILE" deployments stop "$DEMO_APP" --yes
+uv run --frozen agentbricks --profile "$DEMO_PROFILE" deployments get "$DEMO_APP"
+```
+
+Verify `compute_status.state` is `STOPPED`. This stops chat compute; the independently scheduled
+memory pipeline remains enabled. Its subsequent runs can still use remote compute. Changing its
+schedule is a separate pipeline operation, not a consequence of closing the browser or stopping
+an App. The main demo App was stopped after the October 28 browser acceptance walkthrough.
 
 ### Complete terminal-only presentation
 
@@ -490,7 +633,7 @@ For this demo, follow transcript recording → pipeline instructions → recall,
 | Configure/start/inspect distillation | `agentbricks memory pipeline create/get/update/run/runs get`; `/api/2.0/agents/memory-pipelines`. |
 | Agent conversations | App `/api/invocations`, distinct from the workspace store APIs. |
 
-The managed checkpointer stores opaque LangGraph checkpoint items. `agent/transcript.py` additionally writes to the separate `AGENT_TRANSCRIPT_STORE` a deterministic `transcript-*` session per completed invocation with documented `{type: "message", role, content}` items. `source_session_id` links it back to the chat; `actor_id` groups the actor's turns for the pipeline. The official tutorial records one transcript session per conversation; our per-invocation layout is a custom replay-handling choice that increases session count and fragments conversation context. These transcript sessions are implementation records, not additional browser conversations. Replay checks avoid ordinary duplicate appends; writes are not an exactly-once transaction. Text content blocks that are not strings are currently excluded from distillation.
+The managed checkpointer stores opaque LangGraph checkpoint items. `agent/transcript.py` additionally writes to the separate `AGENT_TRANSCRIPT_STORE` a deterministic `transcript-*` session per completed invocation with documented `{type: "message", role, content}` items. `source_session_id` links it back to the chat; `actor_id` groups the actor's turns for the pipeline. The official tutorial records one transcript session per conversation; our per-invocation layout is a custom replay-handling choice that increases session count and fragments conversation context. These transcript sessions are implementation records, not additional browser conversations. A ten-turn chat therefore creates ten readable transcript sessions rather than one. The recommended conversation-level layout appends all turns to one transcript session with a stable conversation ID. It preserves the ordered context for references and corrections, and avoids the extra session records. Moving to that layout requires ordered appends and durable retry deduplication; simply replacing the key with the conversation ID would break the current replay check. Replay checks avoid ordinary duplicate appends; writes are not an exactly-once transaction. Text content blocks that are not strings are currently excluded from distillation.
 
 Pipelines process actors independently, checkpoint progress, and merge/maintain existing memories. They may rewrite, merge, split, or delete entries saved by tools too. Forgetting a stored fact does not erase transcripts, and retained history can supply it to future extraction. Optional direct writes require changing `MEMORY_WRITE_MODE` to `tools` and redeploying; the four tools then support explicit remember/recall/list/forget. That is a separate demonstration from pipeline-only extraction.
 

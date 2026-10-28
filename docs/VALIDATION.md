@@ -1,6 +1,6 @@
 # Validation record
 
-Updated October 27, 2026. The video sequence is **01 CLI**, **02 memory**, **03 horizontal
+Updated October 28, 2026. The video sequence is **01 CLI**, **02 memory**, **03 horizontal
 scaling**, **04 Genie supervisor**, and **05 MCP**. Sample **06 retail assistant** combines the
 integrations as an advanced example.
 
@@ -13,7 +13,7 @@ each pro-code project.
 | Current sample | Offline tests | Doctor | Live check |
 | --- | ---: | ---: | --- |
 | 01 CLI quickstart | 2 passed | 8/8 | Deployed clock-tool invocation completed |
-| 02 Agent memory | 61 passed, 1 skipped | 8/8 | Pipeline distillation plus four natural-language retrieval spot checks; [evidence](../pro-code/02-agent-memory/VALIDATION.md) |
+| 02 Agent memory | 61 passed, 1 skipped | 8/8 | Fresh-resource pipeline rehearsal, four natural-language retrieval spot checks, and user-reported browser acceptance; [evidence](../pro-code/02-agent-memory/VALIDATION.md) |
 | 03 Horizontal scaling | 46 passed, 1 skipped | 8/8 | One- and three-instance Apps passed the 0.7.0 Locust recheck |
 | 04 Genie supervisor | 45 passed, 1 skipped | 8/8 | Sales specialist returned Genie SQL and fetched rows |
 | 05 MCP server | 1 passed | 8/8 | Managed `web_search` MCP returned a tool result and cited answer |
@@ -22,7 +22,7 @@ each pro-code project.
 | Locust runner | 5 passed | n/a | Included in the two-App test above |
 
 The local runner passed **223 tests** with **4 live tests skipped** on Agent Bricks CLI 0.7.0.
-The October 27 push checks reran all offline suites and all six onboarding checks; they did not
+The October 28 push checks reran all offline suites and all six onboarding checks; they did not
 rerun every historical live integration or the load benchmark. Live results below were inspected
 through tool calls/results, not only App readiness. Earlier Genie, retail, and direct-memory
 checks used a Sonnet 5 override. The October 27 memory pipeline and natural-language tests used

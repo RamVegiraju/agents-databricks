@@ -112,3 +112,41 @@ original stopped state afterward. The schedule and persisted stores were left in
 - Installed 0.7.0 source: `databricks_agentkit/langgraph/memory.py`, `session_store.py`, `runtime/tool_manifest.py`, `_api_client.py`, `databricks_agentbricks/cli/pipeline.py`, and `services/dev_service.py`.
 
 The installed CLI includes `memory pipeline runs get`; some documentation still describes REST-only run monitoring. The helper uses the verified CLI implementation. Research descriptions of an injected memory index and unified episodic search/fetch are not claims about this sample's four-tool adapter.
+
+## Full fresh-resource rehearsal · 2026-10-27 (2026-10-28 UTC)
+
+Executed the documented lifecycle in the same `ml-demos` workspace, using isolated new resources rather than pre-created stores or pipeline. Source/configuration was copied to a temporary directory; the original deployment was untouched.
+
+| Step | Measured result |
+| --- | --- |
+| Create checkpoint / transcript / Memory Stores | 2.90 / 4.18 / 2.80 seconds |
+| Create scheduled memory pipeline | 3.18 seconds; response confirmed `SCHEDULED` |
+| Deploy new App / grant transcript access | 146.52 / 2.09 seconds |
+| Session A, two turns | Durable concise-Python preference and chat-only `violet-73` recovered on follow-up; no tools |
+| Before manual distillation | Memory Store empty; one checkpoint session and two readable transcript sessions |
+| Freshness wait | At least 65 seconds after final turn completed |
+| Manual run / CLI polling | `RUNNING` → `SUCCEEDED`, backing job `SUCCESS`; 104.44 seconds observed from returned run to observed success |
+| Extracted memory | One `project_sequoia.md` entry with the durable preference; temporary branch absent |
+| Fresh session B, natural task | Agent selected three `recall` calls and one `list_memories` call, then supplied a Python deduplication function matching the saved preference |
+| Reopen A | Recovered `violet-73` from conversation history, with no memory tools |
+
+The session B prompt asked for a documentation example in the user's usual style; it did not name any tool. Tool selection and memory application passed, but the repeated searches were redundant on this small dataset. This is evidence for selective tool use, not optimal retrieval efficiency or statistically reliable behavior.
+
+The new App `agent-bricks-mem-1028031817` was stopped after the rehearsal; its new pipeline `memory-pipelines/f4278520-6c02-4277-b5ae-7b3a0403ee60` was switched to manual-only to avoid recurring rehearsal work. Stores and conversations remain inspectable. The main demo pipeline's scheduled configuration was not changed. Scheduled execution itself was not observed in this rehearsal.
+
+[Generated full rehearsal evidence](validation/full-rehearsal-2026-10-27.json) includes IDs, creation timings, conversation/tool outputs, readable transcripts, final run status, and cleanup results. No runtime code was changed.
+
+## Deployed browser acceptance · 2026-10-28
+
+The latest memory-specific starter prompts and labels were deployed to the existing
+`agent-bricks-agent-memory` App (deployment `01f1d286f04316059e740d8d4e1a2d36`, API status
+`SUCCEEDED`). The user exercised the browser chat, supplied new facts, manually ran pipeline
+`memory-pipelines/22fb18be-a9c3-402e-86a3-8d5d688386d9/runs/1086410188741238`, and confirmed
+that fresh-session recall worked after the run succeeded. This is **user-reported browser
+acceptance**, supported by screenshots and the supplied successful run output; the coding agent
+could not perform an independent browser click-through because Chrome Computer Use access was
+not approved. Earlier generated API rehearsal evidence remains separately labeled above.
+
+The App was stopped at the user's request after acceptance. Stopping the App preserves the
+stores and does not disable the main pipeline's scheduled policy. The README now makes the lack
+of an end-session trigger explicit and maps demo scenes to their practical value and evidence.

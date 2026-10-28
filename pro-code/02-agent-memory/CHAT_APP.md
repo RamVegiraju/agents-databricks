@@ -10,6 +10,15 @@ a chat turn saves its transcript but does not trigger a pipeline run.
 `agent-langgraph` template (it is included by default; `--disable-chat-app` opts out). It is
 intentionally not a post-generation mutation command.
 
+## Memory-sample presentation
+
+The template already supplies session switching, the Memory browser, tool request/result messages,
+Events, and Traces. The sample reuses its JavaScript and stylesheet, with memory-specific HTML copy
+and composer-fill starter prompts: share a preference → check this conversation → apply saved style
+in a new session. Replace the example project label consistently before sending. The third prompt
+belongs after a successful pipeline run. **Background chat** is a chat transport option, not a
+memory pipeline trigger. See the [README presenter script](README.md#present-the-demo).
+
 ## Installed files
 
 - `ui/` contains the zero-build chat client.

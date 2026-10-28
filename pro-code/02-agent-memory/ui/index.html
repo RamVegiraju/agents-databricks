@@ -54,7 +54,7 @@
                 <div class="capability-item" data-capability="background">
                   <button class="capability" type="button" aria-expanded="false">
                     <span class="capability-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
-                    <span class="capability-copy"><strong>Background runs</strong><small id="background-mode-value">Checking…</small></span>
+                    <span class="capability-copy"><strong>Background chat</strong><small id="background-mode-value">Checking…</small></span>
                     <span id="background-status" class="status-orb"></span>
                     <svg class="capability-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
                   </button>
@@ -170,13 +170,13 @@
               <div class="empty-mark" aria-hidden="true">
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><ellipse cx="12" cy="12" rx="10" ry="4.3"/><ellipse cx="12" cy="12" rx="10" ry="4.3" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4.3" transform="rotate(120 12 12)"/></svg>
               </div>
-              <h2>Start a conversation</h2>
-              <p>Chat with your project agent from agent/agent.py. Every mode runs its instructions and tools; the model picker changes only the model for this page.</p>
-              <p class="empty-prompts-label">What would you like to test?</p>
+              <h2>Try memory across conversations</h2>
+              <p>Share a preference, check it in this conversation, then run the memory pipeline from the terminal. Start a new session to see the agent find and apply the saved preference.</p>
+              <p class="empty-prompts-label">Choose a demo prompt; use a fresh project name each time.</p>
               <div class="prompt-grid">
-                <button type="button" data-prompt="Use the get_current_time tool and explain what you did.">Use a tool</button>
-                <button type="button" data-prompt="Remember in this conversation that my launch color is indigo. Do not use long-term memory.">Test session</button>
-                <button type="button" data-prompt="Remember that I prefer concise Python examples.">Save a preference</button>
+                <button type="button" data-prompt="For project Willow, I prefer concise Python examples. For this chat only, call the temporary test branch amber-42. Acknowledge both briefly.">1. Share a preference</button>
+                <button type="button" data-prompt="From this conversation, what example style do I prefer for Willow, and what temporary branch did I mention?">2. Check this conversation</button>
+                <button type="button" data-prompt="I'm writing documentation for project Willow. Show a function that removes duplicate strings, following my usual example style.">3. Apply saved style in a new session</button>
               </div>
             </div>
           </div>
