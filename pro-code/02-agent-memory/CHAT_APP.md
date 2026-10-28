@@ -17,7 +17,7 @@ Events, and Traces. The sample reuses its JavaScript and stylesheet, with memory
 and composer-fill starter prompts: share a preference → check this conversation → apply saved style
 in a new session. Replace the example project label consistently before sending. The third prompt
 belongs after a successful pipeline run. **Background chat** is a chat transport option, not a
-memory pipeline trigger. See the [README presenter script](README.md#present-the-demo).
+memory pipeline trigger. See the [README presenter script](README.md#try-it-end-to-end).
 
 ## Installed files
 
