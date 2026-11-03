@@ -71,6 +71,11 @@ that the summary and captured responses agree and that all three workload cases
 were exercised. The private directory contains actual prompts and answers; do not
 commit it. Use a fresh run name and smoke filename each time.
 
+For a full one-minute dispatch window, omit `--max-requests` from the direct CLI
+command and use fresh `results/` and `private/` paths. The run drains active
+requests after 60 seconds. `check_results.py` reads the run's recorded limit, so
+it also accepts an uncapped run.
+
 When finished, stop App compute while retaining the deployment:
 
 ```bash

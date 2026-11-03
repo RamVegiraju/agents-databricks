@@ -16,9 +16,11 @@ def main() -> None:
     counts = summary["counts"]
     assert summary["outcome"] == "completed", summary
     assert counts["started"] == counts["completed"] == counts["succeeded"] > 0, counts
-    assert counts["started"] <= 10, counts
+    max_requests = summary["workload"]["max_requests"]
+    if max_requests is not None:
+        assert counts["started"] <= max_requests, counts
     assert counts["failed"] == counts["incomplete"] == 0, counts
-    assert 0 < summary["observed_peak_in_flight"] <= 2, summary
+    assert 0 < summary["observed_peak_in_flight"] <= summary["workload"]["concurrency"], summary
     observations = responses["observations"]
     assert len(observations) == counts["succeeded"], (len(observations), counts)
     assert responses["case_count"] == 3, responses["case_count"]
