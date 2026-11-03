@@ -74,6 +74,14 @@ the two sync commands. Model and App usage may incur charges.
 
 ## 3. Test the included agent for one minute
 
+**`requests.json` is the load-test workload.** It is a nonempty JSON array of
+complete HTTP request bodies. The three entries here are inventory prompts. For
+your own agent, replace them with realistic payloads in the shape your endpoint
+expects; add or remove entries to cover your use cases. Keep the
+`{{request_id}}` placeholder for a fresh managed invocation ID, and use
+`{{user_id}}` for a stable session per simulated user when needed. Update the
+sample-specific checks described in [Use your own agent](#use-your-own-agent).
+
 Use a fresh run name each time. The `mkdir` command creates both output parents;
 `--save-responses` requires its parent directory to exist.
 
@@ -103,6 +111,15 @@ Open `results/<run-name>/report/index.html` for the HTML report;
 and errors. The run dispatches for 60 seconds and then drains active requests.
 The checker confirms all three prompts ran with unique invocation IDs and nonempty
 answers. `private/` contains actual prompts and answers and is ignored by Git.
+
+With three entries, the CLI assigns measured requests in file order:
+case 1 → case 2 → case 3 → case 1, repeating across **all** virtual users. It sends
+one extra warm-up using case 1 before measurement; warm-up is excluded from counts.
+Each virtual user sends its next request after its previous one finishes, up to
+`--concurrency 2` users at once. The CLI replaces `{{request_id}}` with a new UUID
+for every request and `{{user_id}}` with a UUID stable for that virtual user. Case
+counts and latencies appear separately in the Locust report. Cases are cycled
+evenly, with no random selection or per-case weights.
 
 For a faster, ten-request check, run
 `bash scripts/loadtest.sh "$DBX_PROFILE" "$APP_NAME" another-run`.
