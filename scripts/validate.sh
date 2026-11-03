@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run isolated tests from frozen locks without calling workspace services.
+# Run isolated tests and onboarding checks without calling workspace services.
 set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 export RUN_LIVE_TESTS=0
@@ -12,7 +12,7 @@ for SAMPLE in pro-code/01-agentbricks-cli pro-code/02-agent-memory pro-code/03-a
       uv sync --default-index https://pypi.org/simple
     fi
     uv run --frozen python -m pytest -q
-    if [[ "$SAMPLE" == pro-code/* && "$SAMPLE" != pro-code/03-agent-load-test ]]; then
+    if [[ "$SAMPLE" == pro-code/* ]]; then
       uv run --frozen python -c 'from databricks_agentbricks.cli.app import main; main()' doctor .
     fi
   )
