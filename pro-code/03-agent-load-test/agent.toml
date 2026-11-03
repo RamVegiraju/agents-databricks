@@ -1,0 +1,11 @@
+schema_version = 1
+
+[agent]
+framework = "openai"
+server = "custom"
+
+# Bind an existing service only; no default means deploy must not create a model service.
+# Confirm visibility and permissions in the explicitly selected workspace before deploying.
+deployment_name = "agent-load-test"
+[experimental.model_services.agent]
+name = "system.ai.claude-haiku-4-5"

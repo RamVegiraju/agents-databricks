@@ -10,7 +10,7 @@ Complete the [shared setup](../../docs/GETTING_STARTED.md) and create the two Ge
 You need model access plus access to both agents, their warehouse, and underlying data.
 
 ```bash
-cd pro-code/04-genie-supervisor
+cd pro-code/05-genie-supervisor
 export PROFILE="my-workspace"
 uv sync --frozen
 uv run --frozen pytest -q

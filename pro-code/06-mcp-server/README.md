@@ -10,7 +10,7 @@ Complete the [shared setup](../../docs/GETTING_STARTED.md). Your workspace must 
 `system.ai.web_search` and permit the App identity to use it.
 
 ```bash
-cd pro-code/05-mcp-server
+cd pro-code/06-mcp-server
 export PROFILE="my-workspace"
 uv sync --frozen
 uv run --frozen agentbricks doctor .

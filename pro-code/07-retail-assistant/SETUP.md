@@ -1,6 +1,6 @@
 # Set up the retail assistant
 
-Run from `pro-code/06-retail-assistant` after installing dependencies. Choose a profile, existing
+Run from `pro-code/07-retail-assistant` after installing dependencies. Choose a profile, existing
 catalog, dedicated schema, warehouse, and search endpoint. Use the same namespace throughout.
 The examples use `YOUR_CATALOG.YOUR_SCHEMA`; replace it before applying changes.
 

@@ -1,0 +1,5 @@
+[project]
+name = "loadtest-agentbricks-cli"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["databricks-agentbricks[loadtest]==0.8.0"]

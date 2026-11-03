@@ -11,6 +11,6 @@ Start with [Northstar retail Genie Agents](genie-agents/README.md).
 | [genie-agents/render_sql.py](genie-agents/render_sql.py) | Render SQL for the same namespace. |
 | [genie-agents/tests/](genie-agents/tests/) | Local configuration and query checks. |
 
-The [Genie supervisor](../pro-code/04-genie-supervisor/README.md) and
-[retail assistant](../pro-code/06-retail-assistant/README.md) can call these curated agents.
+The [Genie supervisor](../pro-code/05-genie-supervisor/README.md) and
+[retail assistant](../pro-code/07-retail-assistant/README.md) can call these curated agents.
 Genie conversations have their own history; they do not automatically populate Agent Bricks memory.

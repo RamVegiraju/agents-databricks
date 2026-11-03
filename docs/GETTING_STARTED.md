@@ -6,7 +6,8 @@
 - Bash or Zsh. The invocation examples use `uuidgen`; install it if your system does not provide it.
 - A Databricks workspace with model access. Deployment additionally needs Databricks Apps and permission to create the sample's declared resources.
 
-The Python samples pin Agent Bricks 0.7.0. Run commands from the sample directory; each has its own environment.
+Most Python samples pin Agent Bricks 0.7.0; sample 03 uses the 0.8.0 loadtest CLI.
+Run commands from the sample directory; each has its own environment.
 
 ## Authenticate
 
@@ -30,7 +31,10 @@ uv run --frozen agentbricks doctor .
 uv run --frozen pytest -q
 ```
 
-`doctor` checks configuration and wiring; tests check local behavior. Neither proves that remote tools or permissions work.
+Sample 03 uses a custom FastAPI server: follow its README to generate its local lockfiles,
+then run its offline tests. Its `doctor` onboarding checks apply to managed servers.
+For other samples, `doctor` checks configuration and wiring; tests check local behavior.
+Neither proves that remote tools or permissions work.
 The lower-code project uses `uv sync --frozen --group dev` and does not need `doctor`.
 
 ## Local versus deployed
@@ -41,7 +45,7 @@ The lower-code project uses `uv sync --frozen --group dev` and does not need `do
 | `uv run --frozen agentbricks --profile "$PROFILE" deploy NAME --source .` | Creates or updates `agent-bricks-NAME`, provisions declared resources/access, uploads source, and starts the App. |
 
 Use a deployment name of at most 17 lowercase letters, digits, and hyphens. Reusing a name updates that App.
-Open the returned URL for samples with a UI. Samples 01 and 05 use the invocation API.
+Open the returned URL for samples with a UI. Samples 01, 03, and 06 use the invocation API.
 
 A request needs a fresh invocation UUID (`id`) and a stable conversation ID (`session_id`). Reuse the conversation ID for follow-ups; change it for a new conversation.
 

@@ -10,7 +10,7 @@ Complete the [shared setup](../../docs/GETTING_STARTED.md). You need permission 
 managed stores, and tracing, with capacity for four instances. These commands also use `rsync`.
 
 ```bash
-cd pro-code/03-horizontal-scaling
+cd pro-code/04-horizontal-scaling
 export PROFILE="my-workspace"
 uv sync --frozen
 uv run --frozen agentbricks doctor .

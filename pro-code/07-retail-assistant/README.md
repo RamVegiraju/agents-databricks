@@ -15,7 +15,7 @@ You need a combined retail Genie Agent, a ready policy search index, and their a
 GitHub is optional and requires a separately supplied credential.
 
 ```bash
-cd pro-code/06-retail-assistant
+cd pro-code/07-retail-assistant
 export PROFILE="my-workspace"
 uv sync --frozen
 uv run --frozen pytest -q

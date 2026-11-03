@@ -1,0 +1,30 @@
+{
+  "data_kind": "synthetic demonstration inventory; not live operational data",
+  "snapshot_date": "2026-11-02",
+  "products": {
+    "MX-100": {
+      "name": "Industrial temperature sensor",
+      "warehouses": [
+        {"name": "Boston", "on_hand": 12, "reserved": 4, "transit_business_days": {"Boston": 1, "Austin": 3}},
+        {"name": "Chicago", "on_hand": 20, "reserved": 5, "transit_business_days": {"Boston": 2, "Austin": 2}},
+        {"name": "Phoenix", "on_hand": 30, "reserved": 8, "transit_business_days": {"Boston": 4, "Austin": 2}}
+      ]
+    },
+    "SF-200": {
+      "name": "Safety filter cartridge",
+      "warehouses": [
+        {"name": "Boston", "on_hand": 50, "reserved": 10, "transit_business_days": {"Boston": 1, "Austin": 3}},
+        {"name": "Chicago", "on_hand": 18, "reserved": 8, "transit_business_days": {"Boston": 2, "Austin": 2}},
+        {"name": "Phoenix", "on_hand": 16, "reserved": 6, "transit_business_days": {"Boston": 4, "Austin": 2}}
+      ]
+    },
+    "RX-300": {
+      "name": "Replacement controller board",
+      "warehouses": [
+        {"name": "Boston", "on_hand": 4, "reserved": 3, "transit_business_days": {"Boston": 1, "Austin": 3}},
+        {"name": "Chicago", "on_hand": 7, "reserved": 5, "transit_business_days": {"Boston": 2, "Austin": 2}},
+        {"name": "Phoenix", "on_hand": 6, "reserved": 4, "transit_business_days": {"Boston": 4, "Austin": 2}}
+      ]
+    }
+  }
+}

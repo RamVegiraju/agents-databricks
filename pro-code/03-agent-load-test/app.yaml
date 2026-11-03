@@ -1,0 +1,12 @@
+command:
+- python
+- app.py
+env:
+- name: AGENT_MODEL_SERVICE_AGENT
+  value: system.ai.claude-haiku-4-5
+- name: PIP_INDEX_URL
+  value: https://pypi.org/simple/
+- name: UV_INDEX_URL
+  value: https://pypi.org/simple/
+- name: UV_DEFAULT_INDEX
+  value: https://pypi.org/simple/

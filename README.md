@@ -7,13 +7,14 @@ Start with the [setup guide](docs/GETTING_STARTED.md), then choose a sample.
 | --- | --- | --- |
 | [01 · CLI quickstart](pro-code/01-agentbricks-cli/README.md) | Run and deploy an agent with a Python tool. | `agent/agent.py`, `agent/tools/` |
 | [02 · Agent memory](pro-code/02-agent-memory/README.md) | Preserve conversations, distill durable facts, and recall them in a new session. | `agent/memory.py`, `agent/transcript.py`, `resources/` |
-| [03 · App scaling](pro-code/03-horizontal-scaling/README.md) | Compare one and three fixed App instances with Locust. | `agent/benchmark_model.py`, `scripts/loadtest/` |
-| [04 · Genie supervisor](pro-code/04-genie-supervisor/README.md) | Delegate questions to sales and inventory Genie Agents. | `agent/supervisor.py`, `agent.toml` |
-| [05 · MCP tools](pro-code/05-mcp-server/README.md) | Connect an agent to managed web-search tools. | `agent.toml`, `agent/agent.py` |
-| [06 · Retail assistant](pro-code/06-retail-assistant/README.md) | Combine Genie, policy search, and optional GitHub MCP. | `agent/prompt.py`, `agent/tools/`, `data/` |
+| [03 · Agent load test](pro-code/03-agent-load-test/README.md) | Deploy a real inventory agent and load test it with the Agent Bricks CLI. | `agent/assistant.py`, `requests.json`, `scripts/` |
+| [04 · App scaling](pro-code/04-horizontal-scaling/README.md) | Compare one and three fixed App instances with Locust. | `agent/benchmark_model.py`, `scripts/loadtest/` |
+| [05 · Genie supervisor](pro-code/05-genie-supervisor/README.md) | Delegate questions to sales and inventory Genie Agents. | `agent/supervisor.py`, `agent.toml` |
+| [06 · MCP tools](pro-code/06-mcp-server/README.md) | Connect an agent to managed web-search tools. | `agent.toml`, `agent/agent.py` |
+| [07 · Retail assistant](pro-code/07-retail-assistant/README.md) | Combine Genie, policy search, and optional GitHub MCP. | `agent/prompt.py`, `agent/tools/`, `data/` |
 | [Lower-code · Genie Agents](lower-code/genie-agents/README.md) | Curate data context, example questions, and SQL. | `assets/`, `sql/` |
 
-Use 01–05 to learn individual capabilities; 06 combines integrations in a larger application.
+Use 01–06 to learn individual capabilities; 07 combines integrations in a larger application.
 
 | Repository path | Purpose |
 | --- | --- |
