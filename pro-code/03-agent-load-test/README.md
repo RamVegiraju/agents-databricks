@@ -6,9 +6,12 @@ SDK calls an existing Databricks model service and a read-only synthetic invento
 tool. The model service is the **LLM behind the agent**; the App runs the agent
 code and tool. No order or shipment is created.
 
-This directory is already an Agent Bricks project. Start from a fresh clone; you
-do not need `agentbricks init` or an existing deployment. The first `deploy`
-creates the App. Running it again with the same name updates that App.
+This directory is a complete Agent Bricks example: the agent, inventory tool,
+managed-server adapter, and request bodies are already wired together. The steps
+below deploy **this included agent** from a fresh clone; `agentbricks init` and an
+existing deployment are not needed. The first `deploy` creates the App. Running
+it again with the same name updates that App. To test your own agent, see
+[Use your own agent](#use-your-own-agent) after the example steps.
 
 ## Before you start
 
@@ -17,7 +20,7 @@ use a `system.ai` model service, and managed Runtime Store support in the worksp
 The selected model must support chat completions and tool calls. The CLI and App
 install packages from PyPI; use your package index if PyPI is unavailable.
 
-## 1. Choose your workspace and model
+## 1. Choose a workspace and model for the included agent
 
 Run these commands from the repository root in one terminal. Replace the three
 example values with your own. The deployment name must be unique in the workspace
@@ -47,7 +50,7 @@ Choose a listed model that supports
 `agent/assistant.py`. If the sample's default `system.ai.claude-haiku-4-5` is
 available, you can skip the list and selection commands.
 
-## 2. Install, check, and deploy
+## 2. Install, check, and deploy the included agent
 
 ```bash
 # Install the agent and CLI in separate local environments; each sync creates a uv.lock.
@@ -69,7 +72,7 @@ request is independent. `--instances 1` starts one App instance;
 `--pip-index-url` selects its package source. `--frozen` uses the lockfiles from
 the two sync commands. Model and App usage may incur charges.
 
-## 3. Test the real agent and run the CLI for one minute
+## 3. Test the included agent for one minute
 
 Use a fresh run name each time. The `mkdir` command creates both output parents;
 `--save-responses` requires its parent directory to exist.
@@ -108,3 +111,29 @@ For a faster, ten-request check, run
 workspace-specific Runtime Store values into `app.yaml`. Remove those generated
 values before committing the sample for use in another workspace. See
 `AGENTKIT_CONTRACT.md` for the HTTP contract and `VALIDATION.md` for measured runs.
+
+## Use your own agent
+
+The load-test CLI sends HTTP requests to an **already deployed** agent. It does
+not create your agent, register its tools, or configure its model. First build and
+deploy your Agent Bricks project using its own agent code, tool bindings,
+permissions, and model settings. If starting from scratch, use `agentbricks init`
+as described in the Agent Bricks CLI documentation; this sample's `init` step is
+already done.
+
+To adapt this example, change these parts before using step 3:
+
+| Change | Where |
+| --- | --- |
+| Agent behavior and tools | Replace `agent/assistant.py`, `agent/tools.py`, and sample inventory data if you are adapting this project. Declare any managed resources in `agent.toml`, connect them in the agent code, and deploy. The model-service selection commands above apply only to this example's `system.ai` model. |
+| Requests | Edit `requests.json` to contain complete request bodies for your agent, including `"stream": true` if using SSE. For managed invocations, keep `"id": "{{request_id}}"` to avoid cached results; use `"session_id": "{{user_id}}"` when each simulated user needs a stable session. |
+| Endpoint and load | Point `APP_NAME` and `--path` at your deployed endpoint. Use `--sse` only when its response streams SSE. Set concurrency, duration, and timeout to match the workload you want to measure. |
+| Sample-specific checks | Update or skip `scripts/smoke.py` and `scripts/check_results.py`: they expect this inventory tool, exactly three cases, streamed answer text, and token usage. |
+
+If you are adapting the managed-server code itself, also update the input and
+output mapping in `runtime/adapter.py` and document the new contract in
+`AGENTKIT_CONTRACT.md`. For a separately deployed agent, skip this sample's
+model selection, agent install, doctor, and deploy. Install only the CLI environment
+with `uv sync --project cli --default-index https://pypi.org/simple`, prepare your
+request file, and run the `endpoint loadtest` command from step 3 with your App
+name and path.
