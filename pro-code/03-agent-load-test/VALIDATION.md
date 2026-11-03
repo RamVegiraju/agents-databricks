@@ -1,5 +1,43 @@
 # Validation record — November 2, 2026
 
+## Managed Agent Bricks redeploy and one-minute CLI run
+
+The sample was migrated to `DurableAgentServer` using the installed
+`databricks-agentbricks[openai]==0.8.0` runtime and its bundled OpenAI template as
+the API reference. The upstream `databricks/databricks-ai-bridge` source at commit
+`4a0225a6aa15024a9848468f3ab6882a8de49b58` was checked for the runtime,
+deployment, and load-test contracts. `agentbricks doctor .` passed all 8 managed
+onboarding checks. Ruff lint, Ruff format, and the three inventory tests passed.
+
+The same staging App, `agent-bricks-lt-pro-1102`, was redeployed with one instance.
+The CLI reported `ready: true`, a provisioned managed Runtime Store, and a grant
+on the existing `system.ai.claude-haiku-4-5` model service. No Session Store,
+Memory Store, or tracing experiment was bound.
+
+A real nonstreamed `POST /api/invocations` completed with two model requests and
+one `check_inventory` call. Its MX-100 answer correctly identified the 8-unit
+one-day portion and 10-unit two-day portion. A subsequent
+`GET /api/invocations/{id}` returned the stored completed result, including the
+same answer, tool audit, and usage.
+
+The direct published CLI ran with `--concurrency 2 --max-duration 60 --sse`, no
+`--max-requests`, and the managed `/api/invocations` path. The run dispatched
+for one minute, then drained in-flight requests:
+
+| Managed run | Measured successes | Mean completion | p95 completion | Mean answer TTFT | Successful RPS | Output tokens |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| One-minute CLI | 34/34 | 3.63 s | 4.20 s | 1.80 s | 0.540 | 7218 |
+
+There were zero failed or incomplete requests, observed peak concurrency was 2,
+elapsed time including drain was 62.97 seconds, and all 34 successful requests
+had answer TTFT and token usage. The three workload cases ran 12/11/11 times.
+`scripts/check_results.py` passed on the native summary and private response
+capture, confirming unique invocation IDs, nonempty answers, and all cases.
+These measurements describe this one staging deployment and client machine;
+they are not a capacity limit or a production SLO.
+
+## Earlier custom-server validation (historical)
+
 The metrics below came from the original sample directory before it was added to this
 repository. Raw reports and response captures remain private because they include
 workspace host details and actual prompts and answers. The published commands are in

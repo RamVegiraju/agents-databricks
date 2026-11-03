@@ -2,19 +2,19 @@
   {
     "id": "{{request_id}}",
     "session_id": "{{user_id}}",
-    "input": [{"role": "user", "content": "Can we fulfill 18 MX-100 units to Boston within one business day? If not, recommend the fastest split shipment and state what misses the deadline."}],
+    "input": {"messages": [{"role": "user", "content": "Can we fulfill 18 MX-100 units to Boston within one business day? If not, recommend the fastest split shipment and state what misses the deadline."}]},
     "stream": true
   },
   {
     "id": "{{request_id}}",
     "session_id": "{{user_id}}",
-    "input": [{"role": "user", "content": "We need 15 SF-200 units in Austin within two business days. Recommend a feasible plan using available inventory, including any split shipment."}],
+    "input": {"messages": [{"role": "user", "content": "We need 15 SF-200 units in Austin within two business days. Recommend a feasible plan using available inventory, including any split shipment."}]},
     "stream": true
   },
   {
     "id": "{{request_id}}",
     "session_id": "{{user_id}}",
-    "input": [{"role": "user", "content": "Can we ship 12 RX-300 units to Boston? Give the fastest available split and tell me the quantity that cannot be fulfilled from current stock."}],
+    "input": {"messages": [{"role": "user", "content": "Can we ship 12 RX-300 units to Boston? Give the fastest available split and tell me the quantity that cannot be fulfilled from current stock."}]},
     "stream": true
   }
 ]

@@ -1,6 +1,7 @@
 command:
 - python
-- app.py
+- -m
+- runtime.main
 env:
 - name: AGENT_MODEL_SERVICE_AGENT
   value: system.ai.claude-haiku-4-5

@@ -25,12 +25,15 @@ def main() -> None:
         parser.error("Output must be a new file in an existing directory.")
     body = {
         "id": str(uuid4()),
-        "input": [
-            {
-                "role": "user",
-                "content": "Can we fulfill 18 MX-100 units to Boston in one business day? Give the fastest split plan.",
-            }
-        ],
+        "session_id": str(uuid4()),
+        "input": {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "Can we fulfill 18 MX-100 units to Boston in one business day? Give the fastest split plan.",
+                }
+            ]
+        },
         "stream": False,
     }
     command = [
@@ -48,7 +51,7 @@ def main() -> None:
         "invoke",
         args.app,
         "--path",
-        "/invocations",
+        "/api/invocations",
         "--timeout",
         "50",
         "--json",
@@ -64,8 +67,9 @@ def main() -> None:
     # CLI JSON rendering may include an HTTP envelope; preserve that original evidence above.
     payload = response.get("body", response)
     assert payload["status"] == "completed", payload
-    assert payload["output"].strip(), payload
-    tool = payload["tool_calls"][0]
+    output = payload["output"]
+    assert output["answer"].strip(), payload
+    tool = output["tool_calls"][0]
     assert tool["tool"] == "check_inventory", tool
     assert tool["result"]["sku"] == "MX-100", tool
     assert tool["result"]["destination"] == "Boston", tool
@@ -75,10 +79,10 @@ def main() -> None:
             {
                 "status": "passed",
                 "evidence": str(args.output),
-                "model": payload["model"],
-                "model_requests": payload["usage"]["model_requests"],
-                "tool_calls": len(payload["tool_calls"]),
-                "answer": payload["output"],
+                "model": output["model"],
+                "model_requests": output["usage"]["model_requests"],
+                "tool_calls": len(output["tool_calls"]),
+                "answer": output["answer"],
             },
             indent=2,
         )

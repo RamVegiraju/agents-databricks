@@ -1,22 +1,30 @@
-# Sample agent transport and runtime contract
+# Managed runtime contract
 
-This project extends the Agent Bricks custom OpenAI/FastAPI server pattern. `app.yaml`
-starts `app.py`. The framework-native agent is in `agent/assistant.py`, and its local
-read-only tool is in `agent/tools.py`. Agent Bricks owns deployment and load generation;
-FastAPI owns this sample's synchronous HTTP agent transport.
+`runtime/main.py` constructs `DurableAgentServer` and registers the `invoke` and
+`recover` hooks in `runtime/adapter.py`. The framework-native OpenAI Agents SDK
+agent remains in `agent/assistant.py`, with a read-only local tool in
+`agent/tools.py`. The managed runtime owns invocation status, streaming transport,
+result persistence, polling, and replay. Deployment provisions its Runtime Store.
 
-`POST /invocations` accepts one user message in `input` and an optional `stream` boolean.
-`id` defaults to a UUID; `session_id` is optional correlation metadata. With streaming,
-Responses-style SSE reports answer-text deltas and one final completion or failure event.
-With `stream: false`, one JSON object includes the answer, actual tool audit, and native
-SDK token usage. A complete HTTP exchange includes the full tool/model run.
+`POST /api/invocations` accepts a client-generated UUID `id`, a top-level
+`session_id`, `input: {"messages": [{"role": "user", "content": "..."}]}`, and an
+optional `stream` boolean. The invocation ID is an idempotency key; use a fresh ID
+for each measured request. The session ID groups calls but this sample has no
+conversation history or long-term memory binding. Requests are independent.
 
-There is no durable runtime, Session Store, Memory Store, database, or response replay.
-Requests are independent. Credentials come from the explicit local profile or deployed
-App identity. The declared existing model-service binding is injected by the deployment
-as `AGENT_MODEL_SERVICE_AGENT`; local execution falls back to the same named service.
-The server configures the native model client once at startup, off the event loop.
+The nonstreamed response is `{ "id": ..., "status": "completed", "output": {...} }`.
+The output contains the answer, model, SDK usage, and actual inventory tool audit.
+The streamed response emits `delta` answer-text events and a `run.completed`
+event with usage. The load tester reads these for answer-text TTFT, output tokens,
+and completion. The managed result can also be retrieved with
+`GET /api/invocations/{id}`; `GET /api/invocations/{id}/events` replays events.
 
-No tracing destination is declared or created. OpenAI-hosted tracing is disabled. Missing
-trace IDs remain null in native loadtest exports. The deployed Databricks App ingress
-enforces authentication; the localhost development server is for local use only.
+At most two agent calls run concurrently per App process. The 45-second deadline
+includes waiting for a slot. Recovery may replay an interrupted invocation; the
+only tool reads local synthetic inventory and has no external side effects.
+
+The declared existing model service is injected as `AGENT_MODEL_SERVICE_AGENT`.
+Local execution requires an explicit Databricks profile. The App uses its service
+principal. The Agent Bricks OpenAI tracing adapter is initialized, but this sample
+does not bind a workspace tracing experiment. The deployed App ingress enforces
+authentication; localhost is for local development.

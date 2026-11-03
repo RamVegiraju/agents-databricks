@@ -28,7 +28,7 @@ mkdir -p "$sample_result_dir" "$sample_private_dir"
 uv run --frozen --project cli agentbricks \
   --profile "$sample_profile" --output json \
   endpoint loadtest "$sample_app" \
-  --path /invocations --requests requests.json --sse \
+  --path /api/invocations --requests requests.json --sse \
   --concurrency 2 --max-duration 60 --max-requests 10 --timeout 50 \
   --report-dir "$sample_result_dir/report" \
   --save-responses "$sample_private_dir/responses.json" \

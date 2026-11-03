@@ -2,7 +2,7 @@ schema_version = 1
 
 [agent]
 framework = "openai"
-server = "custom"
+server = "agentbricks"
 
 # Bind an existing service only; no default means deploy must not create a model service.
 # Confirm visibility and permissions in the explicitly selected workspace before deploying.
